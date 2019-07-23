@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Main module."""
+import json
 
 class Event:
 
@@ -17,7 +18,9 @@ class Event:
 
     def __str__(self):
         return self._data_dict.__str__()
-    
+
+    def toJSON(self):
+        return json.dumps(self._data_dict)
 
 
 class EventPipeline:
@@ -71,7 +74,10 @@ class DummyOutput:
         
     def run(self, events):
         for event in events:
-            print(event)
+            print(event.toJSON())
+
+
+
 
 
 dummy_pipeline = EventPipeline(DummyInput(), [DummyFilter()], DummyOutput())

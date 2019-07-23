@@ -18,6 +18,5 @@ from dspace_stats_collector import dspace_stats_collector
 #     # import requests
 #     # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
 
-
 def test_dummy_pipeline():
      dspace_stats_collector.dummy_pipeline.run()
