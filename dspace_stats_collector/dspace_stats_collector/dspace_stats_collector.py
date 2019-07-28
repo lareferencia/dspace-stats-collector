@@ -27,10 +27,7 @@ class Event:
         return self._data_dict[attribute]
 
     def __setattr__(self, name, value):
-        if name != '_data_dict':
-            self._data_dict[name] = value
-        else:
-            super().__setattr__(name, value)
+        self._data_dict[name] = value
 
     def __str__(self):
         return self._data_dict.__str__()
@@ -38,11 +35,6 @@ class Event:
     def toJSON(self):
         return json.dumps(self._data_dict)
 
-    @classmethod
-    def fromDict(cls, data_dict):
-        e = cls()
-        e._data_dict = data_dict
-        return e
 
 
 
@@ -89,7 +81,9 @@ class FileInput:
         try:
             r = json.loads(query_result)
             for doc in r['response']['docs']:
-                e = Event.fromDict(doc)
+                e = Event()
+                e._src = doc
+                e.id = e._src['id']
                 yield e
         except:
             msg = "Error while trying to read events from {}".format(self._filename)
@@ -102,10 +96,24 @@ class DummyFilter:
         None
 
     def run(self, events):
-        logging.debug(events)
-
         for event in events:
             event.url = "http://dummy.org/" + str(event.id)
+            yield event
+
+
+class MatomoFilter:
+
+    def __init__(self):
+        None
+
+    def run(self, events):
+        for event in events:
+            event.rec = 1
+            event.cip = event._src['ip']
+            event.ua = event._src['userAgent']
+            event.timestamp = event._src['time']
+            if 'referrer' in event._src.keys():  # Not always available
+                event.urlref = event._src['referrer']
             yield event
 
 
@@ -125,7 +133,7 @@ class EventPipelineBuilder:
         None
 
     def build(self, repo):
-        return EventPipeline(FileInput("../tests/sample_input.json"), [DummyFilter()], DummyOutput())
+        return EventPipeline(FileInput("../tests/sample_input.json"), [MatomoFilter()], DummyOutput())
 
 
 def main(args, loglevel):
