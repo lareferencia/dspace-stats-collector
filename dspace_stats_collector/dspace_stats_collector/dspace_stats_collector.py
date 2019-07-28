@@ -61,7 +61,7 @@ class DummyInput:
         None
 
     def run(self):
-        for x in range(1,50 ):
+        for x in range(1,5):
             e = Event()
             e.id = "00" + str(x)
             yield e
@@ -73,7 +73,7 @@ class DummyFilter:
         None
 
     def run(self, events):
-        print(events)
+        #print(events)
 
         for event in events:
             event.url = "http://dummy.org/" + event.id
@@ -90,15 +90,30 @@ class DummyOutput:
             print(event.toJSON())
 
 
+class EventPipelineBuilder:
+
+    def __init__(self, args):
+        None
+
+    def build(self, repo):
+        return EventPipeline(DummyInput(), [DummyFilter()], DummyOutput())
+
+
 def main(args, loglevel):
 
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     logging.debug("Verbose: %s" % args.verbose)
+    logging.debug("Source: %s" % args.source)
     logging.debug("Limit: %s" % args.limit)
     if args.datefrom:
         logging.debug("Date from: %s" % args.datefrom.strftime("%Y-%m-%d"))
 
-    dummy_pipeline = EventPipeline(DummyInput(), [DummyFilter()], DummyOutput())
+    epb = EventPipelineBuilder(args)
+    for repo in args.source:
+        logging.debug("START: %s" % repo)
+        pipeline = epb.build(repo)
+        pipeline.run()
+        logging.debug("END: %s" % repo)
 
 
 def parse_args():
