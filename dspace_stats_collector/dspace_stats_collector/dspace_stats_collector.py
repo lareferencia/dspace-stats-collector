@@ -11,7 +11,7 @@ import datetime
 
 
 DESCRIPTION = """
-Collects Usage Stats from DSpace.
+Collects Usage Stats from DSpace repositories.
 """
 
 
@@ -95,7 +95,8 @@ def main(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     logging.debug("Verbose: %s" % args.verbose)
     logging.debug("Limit: %s" % args.limit)
-    logging.debug("Date from: %s" % args.datefrom.strftime("%Y-%m-%d"))
+    if args.datefrom:
+        logging.debug("Date from: %s" % args.datefrom.strftime("%Y-%m-%d"))
 
     dummy_pipeline = EventPipeline(DummyInput(), [DummyFilter()], DummyOutput())
 
@@ -112,6 +113,10 @@ def parse_args():
             raise argparse.ArgumentTypeError(msg)
 
     parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser.add_argument("source",
+                        metavar="R",
+                        nargs="+",
+                        help="source repositories to collect usage stats from")
     parser.add_argument("-f", "--datefrom",
                         type=valid_date_type,
                         metavar="<YYYY-MM-DD>",
