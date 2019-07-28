@@ -7,11 +7,12 @@ import json
 import sys
 import argparse
 import logging
+import datetime
 
 
-DESCRIPTION = '''
+DESCRIPTION = """
 Collects Usage Stats from DSpace.
-'''
+"""
 
 
 class Event:
@@ -62,7 +63,7 @@ class DummyInput:
     def run(self):
         for x in range(1,50 ):
             e = Event()
-            e.id = '00' + str(x)
+            e.id = "00" + str(x)
             yield e
 
 
@@ -92,16 +93,30 @@ class DummyOutput:
 def main(args, loglevel):
 
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
-
-    dummy_pipeline = EventPipeline(DummyInput(), [DummyFilter()], DummyOutput())
-    # TODO Replace this with your actual code.
     logging.debug("Verbose: %s" % args.verbose)
     logging.debug("Limit: %s" % args.limit)
+    logging.debug("Date from: %s" % args.datefrom.strftime("%Y-%m-%d"))
+
+    dummy_pipeline = EventPipeline(DummyInput(), [DummyFilter()], DummyOutput())
 
 
 def parse_args():
 
+    def valid_date_type(arg_date_str):
+        """custom argparse *date* type for user dates values given from the command line"""
+        # https://gist.github.com/monkut/e60eea811ef085a6540f
+        try:
+            return datetime.datetime.strptime(arg_date_str, "%Y-%m-%d")
+        except ValueError:
+            msg = "Given Date ({0}) not valid! Expected format, YYYY-MM-DD!".format(arg_date_str)
+            raise argparse.ArgumentTypeError(msg)
+
     parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser.add_argument("-f", "--datefrom",
+                        type=valid_date_type,
+                        metavar="<YYYY-MM-DD>",
+                        default=None,
+                        help="collect events only from this date")
     parser.add_argument("-l",
                         "--limit",
                         metavar="<n>",
@@ -115,7 +130,7 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_args()
 
     if args.verbose:
