@@ -8,6 +8,7 @@ import sys
 import argparse
 import logging
 import datetime
+import json
 
 
 DESCRIPTION = """
@@ -26,13 +27,23 @@ class Event:
         return self._data_dict[attribute]
 
     def __setattr__(self, name, value):
-        self._data_dict[name] = value
+        if name != '_data_dict':
+            self._data_dict[name] = value
+        else:
+            super().__setattr__(name, value)
 
     def __str__(self):
         return self._data_dict.__str__()
 
     def toJSON(self):
         return json.dumps(self._data_dict)
+
+    @classmethod
+    def fromDict(cls, data_dict):
+        e = cls()
+        e._data_dict = data_dict
+        return e
+
 
 
 class EventPipeline:
@@ -61,10 +72,28 @@ class DummyInput:
         None
 
     def run(self):
-        for x in range(1,50 ):
+        for x in range(1,5):
             e = Event()
             e.id = "00" + str(x)
             yield e
+
+
+class FileInput:
+
+    def __init__(self, filename):
+        self._filename = filename
+
+    def run(self):
+        with open(self._filename, 'r') as content_file:
+            query_result = content_file.read()
+        try:
+            r = json.loads(query_result)
+            for doc in r['response']['docs']:
+                e = Event.fromDict(doc)
+                yield e
+        except:
+            msg = "Error while trying to read events from {}".format(self._filename)
+            raise Exception(msg)
 
 
 class DummyFilter:
@@ -73,10 +102,10 @@ class DummyFilter:
         None
 
     def run(self, events):
-        print(events)
+        logging.debug(events)
 
         for event in events:
-            event.url = "http://dummy.org/" + event.id
+            event.url = "http://dummy.org/" + str(event.id)
             yield event
 
 
@@ -90,15 +119,30 @@ class DummyOutput:
             print(event.toJSON())
 
 
+class EventPipelineBuilder:
+
+    def __init__(self, args):
+        None
+
+    def build(self, repo):
+        return EventPipeline(FileInput("../tests/sample_input.json"), [DummyFilter()], DummyOutput())
+
+
 def main(args, loglevel):
 
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     logging.debug("Verbose: %s" % args.verbose)
+    logging.debug("Source: %s" % args.source)
     logging.debug("Limit: %s" % args.limit)
     if args.datefrom:
         logging.debug("Date from: %s" % args.datefrom.strftime("%Y-%m-%d"))
 
-    dummy_pipeline = EventPipeline(DummyInput(), [DummyFilter()], DummyOutput())
+    epb = EventPipelineBuilder(args)
+    for repo in args.source:
+        logging.debug("START: %s" % repo)
+        pipeline = epb.build(repo)
+        pipeline.run()
+        logging.debug("END: %s" % repo)
 
 
 def parse_args():
