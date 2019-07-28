@@ -33,10 +33,7 @@ class Event:
         return self._data_dict.__str__()
 
     def toJSON(self):
-        return json.dumps(self._data_dict)
-
-
-
+        return json.dumps(self._data_dict, indent=4, sort_keys=True)
 
 class EventPipeline:
 
@@ -83,7 +80,6 @@ class FileInput:
             for doc in r['response']['docs']:
                 e = Event()
                 e._src = doc
-                e.id = e._src['id']
                 yield e
         except:
             msg = "Error while trying to read events from {}".format(self._filename)
