@@ -1,14 +1,25 @@
+#!/usr/bin/env python
+#
 # -*- coding: utf-8 -*-
 
 """Main module."""
 import json
+import sys
+import argparse
+import logging
+
+
+DESCRIPTION = '''
+Collects Usage Stats from DSpace.
+'''
+
 
 class Event:
 
     _data_dict = {}
 
     def __init__(self):
-        None        
+        None
 
     def __getattr__(self, attribute):
         return self._data_dict[attribute]
@@ -35,7 +46,7 @@ class EventPipeline:
         self._output_stage = output
 
     def run(self):
-        events = self._input_stage.run() 
+        events = self._input_stage.run()
 
         for filter in self._filters_stage:
             events = filter.run(events)
@@ -47,7 +58,7 @@ class DummyInput:
 
     def __init__(self):
         None
-        
+
     def run(self):
         for x in range(1,50 ):
             e = Event()
@@ -59,7 +70,7 @@ class DummyFilter:
 
     def __init__(self):
         None
-        
+
     def run(self, events):
         print(events)
 
@@ -67,17 +78,50 @@ class DummyFilter:
             event.url = "http://dummy.org/" + event.id
             yield event
 
+
 class DummyOutput:
 
     def __init__(self):
         None
-        
+
     def run(self, events):
         for event in events:
             print(event.toJSON())
 
 
+def main(args, loglevel):
+
+    logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
+
+    dummy_pipeline = EventPipeline(DummyInput(), [DummyFilter()], DummyOutput())
+    # TODO Replace this with your actual code.
+    logging.debug("Verbose: %s" % args.verbose)
+    logging.debug("Limit: %s" % args.limit)
 
 
+def parse_args():
 
-dummy_pipeline = EventPipeline(DummyInput(), [DummyFilter()], DummyOutput())
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser.add_argument("-l",
+                        "--limit",
+                        metavar="<n>",
+                        type=int,
+                        help="max number of events to output")
+    parser.add_argument("-v",
+                        "--verbose",
+                        help="increase output verbosity",
+                        default=False,
+                        action="store_true")
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = parse_args()
+
+    if args.verbose:
+        loglevel = logging.DEBUG
+    else:
+        loglevel = logging.INFO
+
+    main(args, loglevel)
+
