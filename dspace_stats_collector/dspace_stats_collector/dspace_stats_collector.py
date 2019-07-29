@@ -9,10 +9,12 @@ import argparse
 import logging
 import datetime
 import json
+from pyjavaprops.javaproperties import JavaProperties
 
 
 DESCRIPTION = """
 Collects Usage Stats from DSpace repositories.
+Repository names are used to load configuration parameters from <repo_name>.properties file.
 """
 
 
@@ -62,9 +64,9 @@ class DummyInput:
 
     def run(self):
         for x in range(1,5):
-            e = Event()
-            e.id = "00" + str(x)
-            yield e
+            event = Event()
+            event.id = "00" + str(x)
+            yield event
 
 
 class FileInput:
@@ -78,9 +80,9 @@ class FileInput:
         try:
             r = json.loads(query_result)
             for doc in r['response']['docs']:
-                e = Event()
-                e._src = doc
-                yield e
+                event = Event()
+                event._src = doc
+                yield event
         except:
             msg = "Error while trying to read events from {}".format(self._filename)
             raise Exception(msg)
@@ -97,6 +99,26 @@ class DummyFilter:
             yield event
 
 
+class RepoPropertiesFilter:
+
+    def __init__(self, repoPropertiesFilename):
+        repoProperties = JavaProperties()
+        try:
+            repoProperties.load(open(repoPropertiesFilename))
+        except:
+            msg = "Error while trying to read properties file %s" % repoPropertiesFilename
+            raise Exception(msg)
+        self._repoPropertiesDict = repoProperties.get_property_dict()
+
+        logging.debug("Read succesfully property file %s" % repoPropertiesFilename)
+        logging.debug("Repository properties: %s" % self._repoPropertiesDict)
+
+    def run(self, events):
+        for event in events:
+            event._repo = self._repoPropertiesDict
+            yield event
+
+
 class MatomoFilter:
 
     def __init__(self):
@@ -104,12 +126,14 @@ class MatomoFilter:
 
     def run(self, events):
         for event in events:
-            event.rec = 1
             event.cip = event._src['ip']
             event.ua = event._src['userAgent']
             event.timestamp = event._src['time']
             if 'referrer' in event._src.keys():  # Not always available
                 event.urlref = event._src['referrer']
+            event.rec = event._repo['matomo.rec']
+            event.idSite = event._repo['matomo.idSite']
+            event.token_auth = event._repo['matomo.token_auth']
             yield event
 
 
@@ -126,23 +150,31 @@ class DummyOutput:
 class EventPipelineBuilder:
 
     def __init__(self, args):
-        None
+        self._config_dir = args.config_dir
 
     def build(self, repo):
-        return EventPipeline(FileInput("../tests/sample_input.json"), [MatomoFilter()], DummyOutput())
+        repoPropertiesFilename = "%s/%s.properties" % (self._config_dir, repo)
+        return EventPipeline(
+            FileInput("../tests/sample_input.json"),
+            [
+                RepoPropertiesFilter(repoPropertiesFilename),
+                MatomoFilter()
+            ],
+            DummyOutput())
 
 
 def main(args, loglevel):
 
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     logging.debug("Verbose: %s" % args.verbose)
-    logging.debug("Source: %s" % args.source)
+    logging.debug("Repositories: %s" % args.repositories)
+    logging.debug("Configuration Directory: %s" % args.config_dir)
     logging.debug("Limit: %s" % args.limit)
-    if args.datefrom:
-        logging.debug("Date from: %s" % args.datefrom.strftime("%Y-%m-%d"))
+    if args.date_from:
+        logging.debug("Date from: %s" % args.date_from.strftime("%Y-%m-%d"))
 
     epb = EventPipelineBuilder(args)
-    for repo in args.source:
+    for repo in args.repositories:
         logging.debug("START: %s" % repo)
         pipeline = epb.build(repo)
         pipeline.run()
@@ -161,11 +193,11 @@ def parse_args():
             raise argparse.ArgumentTypeError(msg)
 
     parser = argparse.ArgumentParser(description=DESCRIPTION)
-    parser.add_argument("source",
-                        metavar="R",
+    parser.add_argument("repositories",
+                        metavar="<repo_name>",
                         nargs="+",
-                        help="source repositories to collect usage stats from")
-    parser.add_argument("-f", "--datefrom",
+                        help="name of repositories to collect usage stats from. Should match the name of the corresponding properties files in config dir")
+    parser.add_argument("-f", "--date_from",
                         type=valid_date_type,
                         metavar="<YYYY-MM-DD>",
                         default=None,
@@ -175,6 +207,11 @@ def parse_args():
                         metavar="<n>",
                         type=int,
                         help="max number of events to output")
+    parser.add_argument("-c",
+                        "--config_dir",
+                        metavar="<dir>",
+                        default="./config",
+                        help="path to configuration directory")
     parser.add_argument("-v",
                         "--verbose",
                         help="increase output verbosity",
