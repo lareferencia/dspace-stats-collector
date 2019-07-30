@@ -10,6 +10,7 @@ import logging
 import datetime
 import json
 import hashlib
+import requests
 from pyjavaprops.javaproperties import JavaProperties
 from dateutil import parser as dateutil_parser
 
@@ -183,6 +184,9 @@ class Repository:
         self.propertiesFilename = propertiesFilename
         self.properties = self._read_properties()
         self.dspaceProperties = self._read_dspace_properties()
+        self.solrSession = requests.Session()
+        self.solrServer = self._find_solr_server()
+
         self.eventPipeline = EventPipelineBuilder().build(self.properties)
 
     def _read_properties(self):
@@ -196,9 +200,8 @@ class Repository:
             raise Exception(msg)
 
         logging.debug("Read succesfully property file %s" % self.propertiesFilename)
-        logging.debug("Repository properties: %s" % property_dict)
+        # logging.debug("Repository properties: %s" % property_dict)
         return property_dict
-
 
     def _read_dspace_properties(self):
         javaprops = JavaProperties()
@@ -223,6 +226,45 @@ class Repository:
 
         # logging.debug("DSpace properties: %s" % property_dict)
         return property_dict
+
+    def _find_solr_server(self):
+
+        # Find server
+        solrServer = None
+        response = None
+        search_path = [
+            self.properties['solr.server'] if 'solr.server' in self.properties.keys() else None,
+            self.dspaceProperties['solr.server'] if 'solr.server' in self.dspaceProperties.keys() else None,
+            "http://localhost:8080/solr"
+            ]
+        for path in search_path:
+            if path is None:
+                continue
+            url = path + "/statistics/admin/ping?wt=json"
+            try:
+                response = self.solrSession.get(url)
+                if response.status_code == 200:
+                    solrServer = path
+                    break
+            except:
+                pass
+
+        if solrServer is not None:
+            logging.debug("Solr Server found at %s" % solrServer)
+        else:
+            logging.error("Solr Server not found in search path: %s" % search_path)
+            raise Exception()
+
+        # Test Connection
+        try:
+            status = json.loads(response.text)["status"]
+            logging.debug("Solr Statistics Core Status: %s" % status)
+        except:
+            logging.error("Could not read Solr Statistics Core Status from %s" % solrServer)
+            raise Exception()
+
+        assert status == "OK", "Solr Statistics Core Not Ready"
+        return solrServer
 
 
 def main(args, loglevel):
