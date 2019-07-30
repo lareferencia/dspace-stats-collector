@@ -10,6 +10,7 @@ import logging
 import datetime
 import json
 import hashlib
+import requests
 from pyjavaprops.javaproperties import JavaProperties
 from dateutil import parser as dateutil_parser
 
@@ -103,21 +104,12 @@ class DummyFilter:
 
 class RepoPropertiesFilter:
 
-    def __init__(self, repoPropertiesFilename):
-        repoProperties = JavaProperties()
-        try:
-            repoProperties.load(open(repoPropertiesFilename))
-        except:
-            msg = "Error while trying to read properties file %s" % repoPropertiesFilename
-            raise Exception(msg)
-        self._repoPropertiesDict = repoProperties.get_property_dict()
-
-        logging.debug("Read succesfully property file %s" % repoPropertiesFilename)
-        logging.debug("Repository properties: %s" % self._repoPropertiesDict)
+    def __init__(self, repoProperties):
+        self._repoProperties = repoProperties
 
     def run(self, events):
         for event in events:
-            event._repo = self._repoPropertiesDict
+            event._repo = self._repoProperties
             yield event
 
 
@@ -172,19 +164,107 @@ class DummyOutput:
 
 class EventPipelineBuilder:
 
-    def __init__(self, args):
-        self._config_dir = args.config_dir
+    def __init__(self):
+        None
 
-    def build(self, repo):
-        repoPropertiesFilename = "%s/%s.properties" % (self._config_dir, repo)
+    def build(self, repoProperties):
         return EventPipeline(
             FileInput("../tests/sample_input.json"),
             [
-                RepoPropertiesFilter(repoPropertiesFilename),
+                RepoPropertiesFilter(repoProperties),
                 SimpleHashSessionFilter(),
                 MatomoFilter()
             ],
             DummyOutput())
+
+
+class Repository:
+
+    def __init__(self, propertiesFilename):
+        self.propertiesFilename = propertiesFilename
+        self.properties = self._read_properties()
+        self.dspaceProperties = self._read_dspace_properties()
+        self.solrSession = requests.Session()
+        self.solrServer = self._find_solr_server()
+
+        self.eventPipeline = EventPipelineBuilder().build(self.properties)
+
+    def _read_properties(self):
+        javaprops = JavaProperties()
+
+        try:
+            javaprops.load(open(self.propertiesFilename))
+            property_dict = javaprops.get_property_dict()
+        except FileNotFoundError:
+            msg = "Error while trying to read properties file %s" % self.propertiesFilename
+            raise Exception(msg)
+
+        logging.debug("Read succesfully property file %s" % self.propertiesFilename)
+        # logging.debug("Repository properties: %s" % property_dict)
+        return property_dict
+
+    def _read_dspace_properties(self):
+        javaprops = JavaProperties()
+
+        try:
+            propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
+            javaprops.load(open(propertiesFilename))
+            property_dict = javaprops.get_property_dict()
+            logging.debug("Read succesfully property file %s" % propertiesFilename)
+        except FileNotFoundError:
+            msg = "Error while trying to read properties file %s" % propertiesFilename
+            raise Exception(msg)
+
+        try:
+            propertiesFilename = "%s/config/local.cfg" % (self.properties["dspace.dir"])
+            javaprops.load(open(propertiesFilename))
+            property_dict = javaprops.get_property_dict()
+            logging.debug("Read succesfully property file %s" % propertiesFilename)
+        except FileNotFoundError:
+            logging.debug("Could not read property file %s" % propertiesFilename)
+            pass
+
+        # logging.debug("DSpace properties: %s" % property_dict)
+        return property_dict
+
+    def _find_solr_server(self):
+
+        # Find server
+        solrServer = None
+        response = None
+        search_path = [
+            self.properties['solr.server'] if 'solr.server' in self.properties.keys() else None,
+            self.dspaceProperties['solr.server'] if 'solr.server' in self.dspaceProperties.keys() else None,
+            "http://localhost:8080/solr"
+            ]
+        for path in search_path:
+            if path is None:
+                continue
+            url = path + "/statistics/admin/ping?wt=json"
+            try:
+                response = self.solrSession.get(url)
+                if response.status_code == 200:
+                    solrServer = path
+                    break
+            except:
+                pass
+
+        if solrServer is not None:
+            logging.debug("Solr Server found at %s" % solrServer)
+        else:
+            logging.error("Solr Server not found in search path: %s" % search_path)
+            raise Exception()
+
+        # Test Connection
+        try:
+            status = json.loads(response.text)["status"]
+            logging.debug("Solr Statistics Core Status: %s" % status)
+        except:
+            logging.error("Could not read Solr Statistics Core Status from %s" % solrServer)
+            raise Exception()
+
+        assert status == "OK", "Solr Statistics Core Not Ready"
+        return solrServer
 
 
 def main(args, loglevel):
@@ -197,12 +277,12 @@ def main(args, loglevel):
     if args.date_from:
         logging.debug("Date from: %s" % args.date_from.strftime("%Y-%m-%d"))
 
-    epb = EventPipelineBuilder(args)
-    for repo in args.repositories:
-        logging.debug("START: %s" % repo)
-        pipeline = epb.build(repo)
-        pipeline.run()
-        logging.debug("END: %s" % repo)
+    for repoName in args.repositories:
+        logging.debug("START: %s" % repoName)
+        propertiesFilename = "%s/%s.properties" % (args.config_dir, repoName)
+        repo = Repository(propertiesFilename)
+        repo.eventPipeline.run()
+        logging.debug("END: %s" % repoName)
 
 
 def parse_args():
