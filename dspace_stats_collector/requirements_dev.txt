@@ -10,3 +10,8 @@ twine==1.12.1
 
 pytest==3.8.2
 pytest-runner==4.2
+
+requests==2.21.0
+pyjavaprops==1.0.2
+SQLAlchemy==1.2.15
+psycopg2-binary==2.8.3
