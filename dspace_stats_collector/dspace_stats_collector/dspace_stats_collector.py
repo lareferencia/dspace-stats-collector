@@ -179,11 +179,10 @@ class EventPipelineBuilder:
 
 class Repository:
 
-    _data_dict = {}
-
     def __init__(self, propertiesFilename):
         self.propertiesFilename = propertiesFilename
         self.properties = self._read_properties()
+        self.dspaceProperties = self._read_dspace_properties()
         self.eventPipeline = EventPipelineBuilder().build(self.properties)
 
     def _read_properties(self):
@@ -192,12 +191,37 @@ class Repository:
         try:
             javaprops.load(open(self.propertiesFilename))
             property_dict = javaprops.get_property_dict()
-        except:
+        except FileNotFoundError:
             msg = "Error while trying to read properties file %s" % self.propertiesFilename
             raise Exception(msg)
 
         logging.debug("Read succesfully property file %s" % self.propertiesFilename)
         logging.debug("Repository properties: %s" % property_dict)
+        return property_dict
+
+
+    def _read_dspace_properties(self):
+        javaprops = JavaProperties()
+
+        try:
+            propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
+            javaprops.load(open(propertiesFilename))
+            property_dict = javaprops.get_property_dict()
+            logging.debug("Read succesfully property file %s" % propertiesFilename)
+        except FileNotFoundError:
+            msg = "Error while trying to read properties file %s" % propertiesFilename
+            raise Exception(msg)
+
+        try:
+            propertiesFilename = "%s/config/local.cfg" % (self.properties["dspace.dir"])
+            javaprops.load(open(propertiesFilename))
+            property_dict = javaprops.get_property_dict()
+            logging.debug("Read succesfully property file %s" % propertiesFilename)
+        except FileNotFoundError:
+            logging.debug("Could not read property file %s" % propertiesFilename)
+            pass
+
+        # logging.debug("DSpace properties: %s" % property_dict)
         return property_dict
 
 
