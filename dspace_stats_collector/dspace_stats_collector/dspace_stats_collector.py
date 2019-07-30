@@ -9,7 +9,9 @@ import argparse
 import logging
 import datetime
 import json
+import hashlib
 from pyjavaprops.javaproperties import JavaProperties
+from dateutil import parser as dateutil_parser
 
 
 DESCRIPTION = """
@@ -119,6 +121,26 @@ class RepoPropertiesFilter:
             yield event
 
 
+class SimpleHashSessionFilter:
+
+    def __init__(self):
+        None
+
+    def run(self, events):
+        for event in events:
+            srcString = "{:%Y-%m-%d}#{}#{}".format(
+                            dateutil_parser.parse(event._src['time']),
+                            event._src['ip'],
+                            event._src['userAgent']
+                        )
+            sessDict = {
+                        'id': hashlib.md5(srcString.encode()).hexdigest(),
+                        'srcString': srcString
+                       }
+            event._sess = sessDict
+            yield event
+
+
 class MatomoFilter:
 
     def __init__(self):
@@ -134,6 +156,7 @@ class MatomoFilter:
             event.rec = event._repo['matomo.rec']
             event.idSite = event._repo['matomo.idSite']
             event.token_auth = event._repo['matomo.token_auth']
+            event.idVisit = event._sess['id']
             yield event
 
 
@@ -158,6 +181,7 @@ class EventPipelineBuilder:
             FileInput("../tests/sample_input.json"),
             [
                 RepoPropertiesFilter(repoPropertiesFilename),
+                SimpleHashSessionFilter(),
                 MatomoFilter()
             ],
             DummyOutput())
