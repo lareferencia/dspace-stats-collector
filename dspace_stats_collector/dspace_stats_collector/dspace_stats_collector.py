@@ -103,21 +103,12 @@ class DummyFilter:
 
 class RepoPropertiesFilter:
 
-    def __init__(self, repoPropertiesFilename):
-        repoProperties = JavaProperties()
-        try:
-            repoProperties.load(open(repoPropertiesFilename))
-        except:
-            msg = "Error while trying to read properties file %s" % repoPropertiesFilename
-            raise Exception(msg)
-        self._repoPropertiesDict = repoProperties.get_property_dict()
-
-        logging.debug("Read succesfully property file %s" % repoPropertiesFilename)
-        logging.debug("Repository properties: %s" % self._repoPropertiesDict)
+    def __init__(self, repoProperties):
+        self._repoProperties = repoProperties
 
     def run(self, events):
         for event in events:
-            event._repo = self._repoPropertiesDict
+            event._repo = self._repoProperties
             yield event
 
 
@@ -172,19 +163,42 @@ class DummyOutput:
 
 class EventPipelineBuilder:
 
-    def __init__(self, args):
-        self._config_dir = args.config_dir
+    def __init__(self):
+        None
 
-    def build(self, repo):
-        repoPropertiesFilename = "%s/%s.properties" % (self._config_dir, repo)
+    def build(self, repoProperties):
         return EventPipeline(
             FileInput("../tests/sample_input.json"),
             [
-                RepoPropertiesFilter(repoPropertiesFilename),
+                RepoPropertiesFilter(repoProperties),
                 SimpleHashSessionFilter(),
                 MatomoFilter()
             ],
             DummyOutput())
+
+
+class Repository:
+
+    _data_dict = {}
+
+    def __init__(self, propertiesFilename):
+        self.propertiesFilename = propertiesFilename
+        self.properties = self._read_properties()
+        self.eventPipeline = EventPipelineBuilder().build(self.properties)
+
+    def _read_properties(self):
+        javaprops = JavaProperties()
+
+        try:
+            javaprops.load(open(self.propertiesFilename))
+            property_dict = javaprops.get_property_dict()
+        except:
+            msg = "Error while trying to read properties file %s" % self.propertiesFilename
+            raise Exception(msg)
+
+        logging.debug("Read succesfully property file %s" % self.propertiesFilename)
+        logging.debug("Repository properties: %s" % property_dict)
+        return property_dict
 
 
 def main(args, loglevel):
@@ -197,12 +211,12 @@ def main(args, loglevel):
     if args.date_from:
         logging.debug("Date from: %s" % args.date_from.strftime("%Y-%m-%d"))
 
-    epb = EventPipelineBuilder(args)
-    for repo in args.repositories:
-        logging.debug("START: %s" % repo)
-        pipeline = epb.build(repo)
-        pipeline.run()
-        logging.debug("END: %s" % repo)
+    for repoName in args.repositories:
+        logging.debug("START: %s" % repoName)
+        propertiesFilename = "%s/%s.properties" % (args.config_dir, repoName)
+        repo = Repository(propertiesFilename)
+        repo.eventPipeline.run()
+        logging.debug("END: %s" % repoName)
 
 
 def parse_args():
