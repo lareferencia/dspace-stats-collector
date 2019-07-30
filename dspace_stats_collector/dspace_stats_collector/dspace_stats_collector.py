@@ -11,8 +11,10 @@ import datetime
 import json
 import hashlib
 import requests
+import re
 from pyjavaprops.javaproperties import JavaProperties
 from dateutil import parser as dateutil_parser
+from sqlalchemy import create_engine
 
 
 DESCRIPTION = """
@@ -184,8 +186,16 @@ class Repository:
         self.propertiesFilename = propertiesFilename
         self.properties = self._read_properties()
         self.dspaceProperties = self._read_dspace_properties()
+
         self.solrSession = requests.Session()
         self.solrServer = self._find_solr_server()
+
+        self.db = DSpaceDB(
+                        self.dspaceProperties['db.url'],
+                        self.dspaceProperties['db.username'],
+                        self.dspaceProperties['db.password'],
+                        self.dspaceProperties['db.schema']
+                    )
 
         self.eventPipeline = EventPipelineBuilder().build(self.properties)
 
@@ -265,6 +275,45 @@ class Repository:
 
         assert status == "OK", "Solr Statistics Core Not Ready"
         return solrServer
+
+
+class DSpaceDB:
+
+    def __init__(self, jdbcUrl, username, password, schema):
+        self.schema = schema
+
+        # Parse jdbc url
+        # Postgres template: jdbc:postgresql://localhost:5432/dspace
+        # Oracle template: jdbc:oracle:thin:@//localhost:1521/xe
+        m = re.match("^jdbc:(postgresql|oracle):[^\/]*\/\/([^:]+):(\d+)/(.*)$", jdbcUrl)
+        if m is None:
+            logging.error("Could not parse db.url string: %s" % jdbcUrl)
+            raise Exception()
+
+        (engine, hostname, port, database) = m.group(1, 2, 3, 4)
+
+        if engine != "postgresql":
+            logging.error("DB Engine not yet supported: %s" % engine)
+            raise Exception()
+
+        self.connString = '{engine}://{username}:{password}@{hostname}:{port}/{database}'
+        self.connString = self.connString.format(
+                engine=engine,
+                username=username,
+                password=password,
+                hostname=hostname,
+                port=port,
+                database=database,
+                )
+        logging.debug('DB Connection String: ' + self.connString)
+        try:
+            self.conn = create_engine(self.connString).connect()
+            logging.debug('DB Connection established successfully.')
+        except:
+            logging.error("Could not connect to DB.")
+            raise Exception()
+
+
 
 
 def main(args, loglevel):
