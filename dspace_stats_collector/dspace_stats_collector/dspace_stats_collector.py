@@ -12,10 +12,11 @@ import json
 import hashlib
 import requests
 import re
+import sqlalchemy
 from pyjavaprops.javaproperties import JavaProperties
 from dateutil import parser as dateutil_parser
-from sqlalchemy import create_engine
 
+logger = logging.getLogger()
 
 DESCRIPTION = """
 Collects Usage Stats from DSpace repositories.
@@ -80,17 +81,17 @@ class FileInput:
         self._filename = filename
 
     def run(self):
-        with open(self._filename, 'r') as content_file:
-            query_result = content_file.read()
         try:
+            with open(self._filename, 'r') as content_file:
+                query_result = content_file.read()
             r = json.loads(query_result)
             for doc in r['response']['docs']:
                 event = Event()
                 event._src = doc
                 yield event
-        except:
-            msg = "Error while trying to read events from {}".format(self._filename)
-            raise Exception(msg)
+        except (FileNotFoundError, json.decoder.JSONDecodeError, KeyError):
+            logger.exception("Error while trying to read events from {}".format(self._filename))
+            raise
 
 
 class DummyFilter:
@@ -205,12 +206,11 @@ class Repository:
         try:
             javaprops.load(open(self.propertiesFilename))
             property_dict = javaprops.get_property_dict()
-        except FileNotFoundError:
-            msg = "Error while trying to read properties file %s" % self.propertiesFilename
-            raise Exception(msg)
+        except (FileNotFoundError, UnboundLocalError):
+            logger.exception("Error while trying to read properties file %s" % self.propertiesFilename)
+            raise
 
-        logging.debug("Read succesfully property file %s" % self.propertiesFilename)
-        # logging.debug("Repository properties: %s" % property_dict)
+        logger.debug("Read succesfully property file %s" % self.propertiesFilename)
         return property_dict
 
     def _read_dspace_properties(self):
@@ -220,21 +220,20 @@ class Repository:
             propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
             javaprops.load(open(propertiesFilename))
             property_dict = javaprops.get_property_dict()
-            logging.debug("Read succesfully property file %s" % propertiesFilename)
-        except FileNotFoundError:
-            msg = "Error while trying to read properties file %s" % propertiesFilename
-            raise Exception(msg)
+            logger.debug("Read succesfully property file %s" % propertiesFilename)
+        except (FileNotFoundError, UnboundLocalError):
+            logger.exception("Error while trying to read properties file %s" % propertiesFilename)
+            raise
 
         try:
             propertiesFilename = "%s/config/local.cfg" % (self.properties["dspace.dir"])
             javaprops.load(open(propertiesFilename))
             property_dict = javaprops.get_property_dict()
-            logging.debug("Read succesfully property file %s" % propertiesFilename)
-        except FileNotFoundError:
-            logging.debug("Could not read property file %s" % propertiesFilename)
+            logger.debug("Read succesfully property file %s" % propertiesFilename)
+        except (FileNotFoundError, UnboundLocalError):
+            logger.debug("Could not read property file %s" % propertiesFilename)
             pass
 
-        # logging.debug("DSpace properties: %s" % property_dict)
         return property_dict
 
     def _find_solr_server(self):
@@ -244,8 +243,7 @@ class Repository:
         response = None
         search_path = [
             self.properties['solr.server'] if 'solr.server' in self.properties.keys() else None,
-            self.dspaceProperties['solr.server'] if 'solr.server' in self.dspaceProperties.keys() else None,
-            "http://localhost:8080/solr"
+            self.dspaceProperties['solr.server'] if 'solr.server' in self.dspaceProperties.keys() else None
             ]
         for path in search_path:
             if path is None:
@@ -260,20 +258,22 @@ class Repository:
                 pass
 
         if solrServer is not None:
-            logging.debug("Solr Server found at %s" % solrServer)
+            logger.debug("Solr Server found at %s" % solrServer)
         else:
-            logging.error("Solr Server not found in search path: %s" % search_path)
-            raise Exception()
+            logger.exception("Solr Server not found in search path: %s" % search_path)
+            raise
 
         # Test Connection
         try:
             status = json.loads(response.text)["status"]
-            logging.debug("Solr Statistics Core Status: %s" % status)
-        except:
-            logging.error("Could not read Solr Statistics Core Status from %s" % solrServer)
-            raise Exception()
+            logger.debug("Solr Statistics Core Status: %s" % status)
+        except (KeyError, json.decoder.JSONDecodeError):
+            logger.exception("Could not read Solr Statistics Core Status from %s" % solrServer)
+            raise
 
-        assert status == "OK", "Solr Statistics Core Not Ready"
+        if status != "OK":
+            logger.error("Solr Statistics Core Not Ready")
+            raise RuntimeError
         return solrServer
 
 
@@ -287,14 +287,14 @@ class DSpaceDB:
         # Oracle template: jdbc:oracle:thin:@//localhost:1521/xe
         m = re.match("^jdbc:(postgresql|oracle):[^\/]*\/\/([^:]+):(\d+)/(.*)$", jdbcUrl)
         if m is None:
-            logging.error("Could not parse db.url string: %s" % jdbcUrl)
-            raise Exception()
+            logger.error("Could not parse db.url string: %s" % jdbcUrl)
+            raise ValueError
 
         (engine, hostname, port, database) = m.group(1, 2, 3, 4)
 
         if engine != "postgresql":
-            logging.error("DB Engine not yet supported: %s" % engine)
-            raise Exception()
+            logger.error("DB Engine not yet supported: %s" % engine)
+            raise NotImplementedError
 
         self.connString = '{engine}://{username}:{password}@{hostname}:{port}/{database}'
         self.connString = self.connString.format(
@@ -305,33 +305,31 @@ class DSpaceDB:
                 port=port,
                 database=database,
                 )
-        logging.debug('DB Connection String: ' + self.connString)
+        logger.debug('DB Connection String: ' + self.connString)
         try:
-            self.conn = create_engine(self.connString).connect()
-            logging.debug('DB Connection established successfully.')
-        except:
-            logging.error("Could not connect to DB.")
-            raise Exception()
-
-
+            self.conn = sqlalchemy.create_engine(self.connString).connect()
+            logger.debug('DB Connection established successfully.')
+        except sqlalchemy.exc.OperationalError:
+            logger.exception("Could not connect to DB.")
+            raise
 
 
 def main(args, loglevel):
 
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
-    logging.debug("Verbose: %s" % args.verbose)
-    logging.debug("Repositories: %s" % args.repositories)
-    logging.debug("Configuration Directory: %s" % args.config_dir)
-    logging.debug("Limit: %s" % args.limit)
+    logger.debug("Verbose: %s" % args.verbose)
+    logger.debug("Repositories: %s" % args.repositories)
+    logger.debug("Configuration Directory: %s" % args.config_dir)
+    logger.debug("Limit: %s" % args.limit)
     if args.date_from:
-        logging.debug("Date from: %s" % args.date_from.strftime("%Y-%m-%d"))
+        logger.debug("Date from: %s" % args.date_from.strftime("%Y-%m-%d"))
 
     for repoName in args.repositories:
-        logging.debug("START: %s" % repoName)
+        logger.debug("START: %s" % repoName)
         propertiesFilename = "%s/%s.properties" % (args.config_dir, repoName)
         repo = Repository(propertiesFilename)
         repo.eventPipeline.run()
-        logging.debug("END: %s" % repoName)
+        logger.debug("END: %s" % repoName)
 
 
 def parse_args():
