@@ -170,11 +170,11 @@ class EventPipelineBuilder:
     def __init__(self):
         None
 
-    def build(self, repoProperties):
+    def build(self, repo):
         return EventPipeline(
             FileInput("../tests/sample_input.json"),
             [
-                RepoPropertiesFilter(repoProperties),
+                RepoPropertiesFilter(repo.properties),
                 SimpleHashSessionFilter(),
                 MatomoFilter()
             ],
@@ -197,8 +197,6 @@ class Repository:
                         self.dspaceProperties['db.password'],
                         self.dspaceProperties['db.schema']
                     )
-
-        self.eventPipeline = EventPipelineBuilder().build(self.properties)
 
     def _read_properties(self):
         javaprops = JavaProperties()
@@ -328,7 +326,8 @@ def main(args, loglevel):
         logger.debug("START: %s" % repoName)
         propertiesFilename = "%s/%s.properties" % (args.config_dir, repoName)
         repo = Repository(propertiesFilename)
-        repo.eventPipeline.run()
+        eventPipeline = EventPipelineBuilder().build(repo)
+        eventPipeline.run()
         logger.debug("END: %s" % repoName)
 
 
