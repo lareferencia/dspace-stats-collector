@@ -12,6 +12,7 @@ import hashlib
 import requests
 import re
 import sqlalchemy
+import pysolr
 import urllib.parse
 import pandas as pd
 from pyjavaprops.javaproperties import JavaProperties
@@ -95,6 +96,75 @@ class FileInput:
             raise
 
 
+class TimestampCursor(object):
+    """ Implements the concept of cursor in relational databases """
+    def __init__(self, solr, query, timeout=100):
+        """ Cursor initialization """
+        self.solr = solr
+        self.query = query
+        self.timeout = timeout
+        self.baseQuery = self.query['q']
+
+    def fetch(self, rows=100, limit=None, initialTimestamp=None):
+        """ Generator method that grabs all the documents in bulk sets of
+        'rows' documents
+        :param rows: number of rows for each request
+        """
+
+        docs_retrieved = 0
+        done = False
+
+        while not done:
+            if (docs_retrieved == 0) & (initialTimestamp is not None):
+                self.query['q'] = self.baseQuery + (' +time:{"%s" TO *]' % initialTimestamp)
+            elif docs_retrieved > 0:
+                self.query['q'] = self.baseQuery + (' +time:{"%s" TO *]' % lastTimestamp)
+
+            if limit is not None:
+                rows = min(rows, limit - docs_retrieved)
+            self.query['rows'] = rows
+
+            results = self.solr._select(self.query)
+            resp_data = json.loads(results)
+            if (docs_retrieved == 0):
+                numFound = resp_data['response']['numFound']
+                logger.debug('{} SOLR events to be processed'.format(numFound))
+            docs = resp_data['response']['docs']
+            numDocs = len(docs)
+
+            if numDocs > 0:
+                docs_retrieved += numDocs
+                lastTimestamp = docs[-1]['time']
+                yield docs
+            else:
+                done = True
+
+
+class SolrStatisticsInput:
+
+    def __init__(self, solrServer, rows=10, limit=None, initialTimestamp=None):
+        self._rows = rows
+        self._limit = limit
+        self._initialTimestamp = initialTimestamp
+        self._solrServer = solrServer + '/statistics'
+
+    def run(self):
+        solr = pysolr.Solr(self._solrServer, timeout=100)
+        cursor = TimestampCursor(solr, {
+            'q': '*',
+            'sort': 'time asc',
+            'start': 0,
+            'wt': 'json',
+            'fq': '+statistics_type:"view" +isBot:false +type:(0 OR 2)',
+            'fl': 'id,ip,owningItem,referrer,time,type,userAgent'
+        })
+        for docs in cursor.fetch(rows=self._rows, limit=self._limit, initialTimestamp = self._initialTimestamp):
+            for doc in docs:
+                event = Event()
+                event._src = doc
+                yield event
+
+
 class DummyFilter:
 
     def __init__(self):
@@ -125,14 +195,19 @@ class DSpaceDBFilter:
     def run(self, events):
         for event in events:
             resourceId = event._src['id']
-            if 'owningItem' in event._src.keys():
+            if event._src['type'] == 0: # Download
                 isDownload = True
                 owningItem = event._src['owningItem']
                 event._db = self._db.queryDownload(resourceId, owningItem)
-            else:
+            elif event._src['type'] == 2: # Item
                 isDownload = False
                 owningItem = None
                 event._db = self._db.queryItem(resourceId)
+            else:
+                logger.error("Unexpected resource type {} for resource: {}".format(event._src['type'], event._src))
+                raise ValueError
+            if event._db is None:
+                continue # Drop event if could not recover data from db
             yield event
 
 
@@ -204,18 +279,27 @@ class DummyOutput:
         None
 
     def run(self, events):
+        n = 0
         for event in events:
+            n += 1
             print(event.toJSON())
-
+        logger.debug('DummyOutput finished processing {} events'.format(n))
 
 class EventPipelineBuilder:
 
-    def __init__(self):
-        None
+    def __init__(self, args):
+        self._args = args
 
     def build(self, repo):
+        if self._args.date_from:
+            initialTimestamp = self._args.date_from.strftime("%Y-%m-%dT00:00:00.000Z")
+        else:
+            initialTimestamp = None
+
         return EventPipeline(
-            FileInput("../tests/sample_input.json"),
+#            FileInput("../tests/sample_input.json"),
+            SolrStatisticsInput(repo.solrServer, limit=self._args.limit,
+                initialTimestamp = initialTimestamp),
             [
                 RepoPropertiesFilter(repo.properties),
                 DSpaceDBFilter(repo.db),
@@ -232,7 +316,6 @@ class Repository:
         self.properties = self._read_properties()
         self.dspaceProperties = self._read_dspace_properties()
 
-        self.solrSession = requests.Session()
         self.solrServer = self._find_solr_server()
 
         self.db = DSpaceDB(
@@ -293,7 +376,7 @@ class Repository:
                 continue
             url = path + "/statistics/admin/ping?wt=json"
             try:
-                response = self.solrSession.get(url)
+                response = requests.get(url)
                 if response.status_code == 200:
                     solrServer = path
                     break
@@ -473,7 +556,7 @@ def main(args, loglevel):
         logger.debug("START: %s" % repoName)
         propertiesFilename = "%s/%s.properties" % (args.config_dir, repoName)
         repo = Repository(propertiesFilename)
-        eventPipeline = EventPipelineBuilder().build(repo)
+        eventPipeline = EventPipelineBuilder(args).build(repo)
         eventPipeline.run()
         logger.debug("END: %s" % repoName)
 
