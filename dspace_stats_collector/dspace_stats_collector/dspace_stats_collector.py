@@ -159,7 +159,10 @@ class SimpleHashSessionFilter:
 class MatomoFilter:
 
     def __init__(self, dspaceProperties):
-        self._handleCanonicalPrefix = dspaceProperties['handle.canonical.prefix']
+        if 'handle.canonical.prefix' in dspaceProperties.keys():
+            self._handleCanonicalPrefix = dspaceProperties['handle.canonical.prefix']
+        else:
+            self._handleCanonicalPrefix = 'http://hdl.handle.net/'
         self._dspaceHostname = dspaceProperties['dspace.hostname']
         self._dspaceUrl = dspaceProperties['dspace.url']
 
@@ -182,10 +185,14 @@ class MatomoFilter:
             event.cvar = json.dumps({"1": ["oaipmhID", oaipmhID]})
 
             if event._db['is_download']:
-                event.download = "{}/bitstream/{}/{}/{}".format(self._dspaceUrl, event._db['handle'], event._db['sequence_id'], (event._db['filename']))
-                event.download = urllib.parse.quote(event.download)
+                event.download = "{dspaceUrl}/bitstream/{handle}/{sequence_id}/{filename}".format(
+                    dspaceUrl = self._dspaceUrl,
+                    handle = event._db['handle'],
+                    sequence_id = event._db['sequence_id'],
+                    filename = urllib.parse.quote(event._db['filename'])
+                )
                 event.url = event.download
-            else:
+            else: # Not a download
                 event.url = self._handleCanonicalPrefix + event._db['handle']
                 # event.download does not get generated
             yield event
