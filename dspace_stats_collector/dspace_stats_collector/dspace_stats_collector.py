@@ -128,7 +128,7 @@ class TimestampCursor(object):
             resp_data = json.loads(results)
             if (docs_retrieved == 0):
                 numFound = resp_data['response']['numFound']
-                logger.debug('{} SOLR events to be processed'.format(numFound))
+                logger.debug('{} SOLR events to be processed'.format(min(numFound, limit)))
             docs = resp_data['response']['docs']
             numDocs = len(docs)
 
