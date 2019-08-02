@@ -13,6 +13,7 @@ import hashlib
 import requests
 import re
 import sqlalchemy
+import pandas as pd
 from pyjavaprops.javaproperties import JavaProperties
 from dateutil import parser as dateutil_parser
 
@@ -116,6 +117,25 @@ class RepoPropertiesFilter:
             yield event
 
 
+class DSpaceDBFilter:
+
+    def __init__(self, db):
+        self._db = db
+
+    def run(self, events):
+        for event in events:
+            resourceId = event._src['id']
+            if 'owningItem' in event._src.keys():
+                isDownload = True
+                owningItem = event._src['owningItem']
+                event._db = self._db.queryDownload(resourceId, owningItem)
+            else:
+                isDownload = False
+                owningItem = None
+                event._db = self._db.queryItem(resourceId)
+            yield event
+
+
 class SimpleHashSessionFilter:
 
     def __init__(self):
@@ -175,6 +195,7 @@ class EventPipelineBuilder:
             FileInput("../tests/sample_input.json"),
             [
                 RepoPropertiesFilter(repo.properties),
+                DSpaceDBFilter(repo.db),
                 SimpleHashSessionFilter(),
                 MatomoFilter()
             ],
@@ -195,7 +216,8 @@ class Repository:
                         self.dspaceProperties['db.url'],
                         self.dspaceProperties['db.username'],
                         self.dspaceProperties['db.password'],
-                        self.dspaceProperties['db.schema']
+                        self.dspaceProperties['db.schema'],
+                        self.properties['dspace.majorVersion']
                     )
 
     def _read_properties(self):
@@ -277,7 +299,7 @@ class Repository:
 
 class DSpaceDB:
 
-    def __init__(self, jdbcUrl, username, password, schema):
+    def __init__(self, jdbcUrl, username, password, schema, dSpaceMajorVersion):
         self.schema = schema
 
         # Parse jdbc url
@@ -310,6 +332,87 @@ class DSpaceDB:
         except sqlalchemy.exc.OperationalError:
             logger.exception("Could not connect to DB.")
             raise
+
+        self._dfResources = pd.DataFrame(columns=['id', 'title', 'sequence_id', 'owning_item', 'handle', 'is_download']).set_index('id')
+
+        if dSpaceMajorVersion == '5':
+            self.resourceIdField = 'resource_id'
+        elif dSpaceMajorVersion == '6':
+            self.resourceIdField = 'dspace_object_id'
+        else:
+            logger.error('Only implemented values for dspace.majorVersion are 5 and 6. Received {}'.format(dSpaceMajorVersion))
+            raise NotImplementedError
+
+    def queryDownload(self, bitstreamId, owningItem):
+        if bitstreamId not in self._dfResources.index.values:
+            SQL = """
+                SELECT mv.{resourceIdField} AS id,
+                       mv.text_value AS title,
+                       b.sequence_id AS sequence_id,
+                       i.item_id AS owning_item,
+                       h.handle AS handle,
+                       true AS is_download
+                FROM metadatavalue AS mv
+                RIGHT JOIN bitstream AS b ON mv.{resourceIdField} = b.bitstream_id
+                RIGHT JOIN bundle2bitstream AS bb ON b.bitstream_id = bb.bitstream_id
+                RIGHT JOIN item2bundle AS i ON i.bundle_id = bb.bundle_id
+                RIGHT JOIN handle AS h ON h.resource_id = i.item_id
+                WHERE metadata_field_id =
+                    (SELECT metadata_field_id
+                     FROM metadatafieldregistry mfr,
+                          metadataschemaregistry msr
+                     WHERE mfr.metadata_schema_id = msr.metadata_schema_id
+                       AND short_id = 'dc'
+                       AND element = 'title'
+                       AND qualifier IS NULL)
+                  AND mv.resource_type_id = 0
+                  AND b.sequence_id IS NOT NULL
+                  AND b.deleted = FALSE
+                  AND mv.{resourceIdField} = {bitstreamId};
+            """.format(resourceIdField = self.resourceIdField, bitstreamId = bitstreamId)
+            dfRecord = pd.read_sql(SQL, self.conn).set_index('id')
+            if len(dfRecord) != 1:
+                logger.debug('Could not recover data for bitstream {} from db'.format(bitstreamId))
+                return None
+            if dfRecord.loc[bitstreamId, 'owning_item'] != owningItem:
+                logger.debug('Owning Item mismatch for bitstream {} from db ({}, {})'.format(bitstreamId, dfRecord.loc[bitstreamId, 'owning_item'], owningItem))
+                return None
+            logger.debug('Successfully recovered data for bitstream {} from db'.format(bitstreamId))
+            self._dfResources = self._dfResources.append(dfRecord)
+
+        return self._dfResources.loc[bitstreamId].to_dict()
+
+    def queryItem(self, itemId):
+        if itemId not in self._dfResources.index.values:
+            SQL = """
+                SELECT mv.{resourceIdField} AS id,
+                       mv.text_value AS title,
+                       NULL AS sequence_id,
+                       NULL AS owning_item,
+                       h.handle AS handle,
+                       false AS is_download
+                FROM metadatavalue AS mv
+                RIGHT JOIN handle AS h ON h.resource_id = mv.{resourceIdField}
+                WHERE metadata_field_id =
+                    (SELECT metadata_field_id
+                     FROM metadatafieldregistry mfr,
+                          metadataschemaregistry msr
+                     WHERE mfr.metadata_schema_id = msr.metadata_schema_id
+                       AND short_id = 'dc'
+                       AND element = 'title'
+                       AND qualifier IS NULL )
+                  AND mv.resource_type_id=2
+                  AND h.resource_type_id=2
+                  AND mv.{resourceIdField} = {itemId};
+            """.format(resourceIdField = self.resourceIdField, itemId = itemId)
+            dfRecord = pd.read_sql(SQL, self.conn).set_index('id')
+            if len(dfRecord) != 1:
+                logger.debug('Could not recover data for item {} from db'.format(itemId))
+                return None
+            logger.debug('Successfully recovered data for item {} from db'.format(itemId))
+            self._dfResources = self._dfResources.append(dfRecord)
+
+        return self._dfResources.loc[itemId].to_dict()
 
 
 def main(args, loglevel):
