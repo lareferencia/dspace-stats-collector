@@ -7,7 +7,6 @@ import json
 import sys
 import argparse
 import logging
-import datetime
 import hashlib
 import requests
 import re
@@ -17,6 +16,8 @@ import urllib.parse
 import pandas as pd
 from pyjavaprops.javaproperties import JavaProperties
 from dateutil import parser as dateutil_parser
+from datetime import datetime
+from pytz import timezone
 
 logger = logging.getLogger()
 
@@ -249,7 +250,10 @@ class MatomoFilter:
         for event in events:
             event.cip = event._src['ip']
             event.ua = event._src['userAgent']
-            event.timestamp = event._src['time']
+
+            utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
+            event.cdt = datetime.strftime(utctime, "%Y-%m-%d %H:%M:%S")
+
             if 'referrer' in event._src.keys():  # Not always available
                 event.urlref = event._src['referrer']
 
@@ -602,7 +606,7 @@ def parse_args():
         """custom argparse *date* type for user dates values given from the command line"""
         # https://gist.github.com/monkut/e60eea811ef085a6540f
         try:
-            return datetime.datetime.strptime(arg_date_str, "%Y-%m-%d")
+            return datetime.strptime(arg_date_str, "%Y-%m-%d")
         except ValueError:
             msg = "Given Date ({0}) not valid! Expected format, YYYY-MM-DD!".format(arg_date_str)
             raise argparse.ArgumentTypeError(msg)
