@@ -13,6 +13,7 @@ import re
 import sqlalchemy
 import pysolr
 import urllib.parse
+import random
 import pandas as pd
 from pyjavaprops.javaproperties import JavaProperties
 from dateutil import parser as dateutil_parser
@@ -248,36 +249,45 @@ class MatomoFilter:
 
     def run(self, events):
         for event in events:
-            event.cip = event._src['ip']
-            event.ua = event._src['userAgent']
+            params = dict()
 
-            utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
-            event.cdt = datetime.strftime(utctime, "%Y-%m-%d %H:%M:%S")
+            # https://developer.matomo.org/api-reference/tracking-api
+            params['idSite'] = event._repo['matomo.idSite']
+            params['rec'] = event._repo['matomo.rec']
+
+            params['action_name'] = event._db['record_title']
+            params['_id'] = event._sess['id']
+            params['rand'] = random.randint(1e5,1e6)
+            params['apiv'] = 1
 
             if 'referrer' in event._src.keys():  # Not always available
-                event.urlref = event._src['referrer']
+                params['urlref'] = event._src['referrer']
 
-            event.rec = event._repo['matomo.rec']
-            event.idSite = event._repo['matomo.idSite']
-            event.token_auth = event._repo['matomo.token_auth']
-            event.idVisit = event._sess['id']
-
-            event.action_name = event._db['record_title']
+            params['ua'] = event._src['userAgent']
 
             oaipmhID = "oai:{}:{}".format(self._dspaceHostname, event._db['handle'])
-            event.cvar = json.dumps({"1": ["oaipmhID", oaipmhID]})
+            params['cvar'] = json.dumps({"1": ["oaipmhID", oaipmhID]})
 
             if event._db['is_download']:
-                event.download = "{dspaceUrl}/bitstream/{handle}/{sequence_id}/{filename}".format(
+                params['download'] = "{dspaceUrl}/bitstream/{handle}/{sequence_id}/{filename}".format(
                     dspaceUrl = self._dspaceUrl,
                     handle = event._db['handle'],
                     sequence_id = event._db['sequence_id'],
                     filename = urllib.parse.quote(event._db['filename'])
                 )
-                event.url = event.download
+                params['url'] = params['download']
             else: # Not a download
-                event.url = self._handleCanonicalPrefix + event._db['handle']
+                params['url'] = self._handleCanonicalPrefix + event._db['handle']
                 # event.download does not get generated
+
+            params['token_auth'] = event._repo['matomo.token_auth']
+            params['cip'] = event._src['ip']
+
+            utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
+            params['cdt'] = datetime.strftime(utctime, "%Y-%m-%d %H:%M:%S")
+
+            event._matomoParams = params
+            event._matomoRequest = '?' + urllib.parse.urlencode(params)
             yield event
 
 
