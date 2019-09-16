@@ -13,6 +13,8 @@ import re
 import sqlalchemy
 import pysolr
 import urllib.parse
+import random
+import os
 import pandas as pd
 from pyjavaprops.javaproperties import JavaProperties
 from dateutil import parser as dateutil_parser
@@ -25,6 +27,8 @@ DESCRIPTION = """
 Collects Usage Stats from DSpace repositories.
 Repository names are used to load configuration parameters from <repo_name>.properties file.
 """
+BULK_TRACKING_BATCH_SIZE_DEFAULT = 50
+SAVE_DIR = os.path.expanduser('~') + '/.dspace_stats_collector'
 
 
 class Event:
@@ -248,36 +252,45 @@ class MatomoFilter:
 
     def run(self, events):
         for event in events:
-            event.cip = event._src['ip']
-            event.ua = event._src['userAgent']
+            params = dict()
 
-            utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
-            event.cdt = datetime.strftime(utctime, "%Y-%m-%d %H:%M:%S")
+            # https://developer.matomo.org/api-reference/tracking-api
+            params['idsite'] = event._repo['matomo.idSite']
+            params['rec'] = event._repo['matomo.rec']
+
+            params['action_name'] = event._db['record_title']
+            params['_id'] = event._sess['id']
+            params['rand'] = random.randint(1e5,1e6)
+            params['apiv'] = 1
 
             if 'referrer' in event._src.keys():  # Not always available
-                event.urlref = event._src['referrer']
+                params['urlref'] = event._src['referrer']
 
-            event.rec = event._repo['matomo.rec']
-            event.idSite = event._repo['matomo.idSite']
-            event.token_auth = event._repo['matomo.token_auth']
-            event.idVisit = event._sess['id']
-
-            event.action_name = event._db['record_title']
+            params['ua'] = event._src['userAgent']
 
             oaipmhID = "oai:{}:{}".format(self._dspaceHostname, event._db['handle'])
-            event.cvar = json.dumps({"1": ["oaipmhID", oaipmhID]})
+            params['cvar'] = json.dumps({"1": ["oaipmhID", oaipmhID]})
 
             if event._db['is_download']:
-                event.download = "{dspaceUrl}/bitstream/{handle}/{sequence_id}/{filename}".format(
+                params['download'] = "{dspaceUrl}/bitstream/{handle}/{sequence_id}/{filename}".format(
                     dspaceUrl = self._dspaceUrl,
                     handle = event._db['handle'],
                     sequence_id = event._db['sequence_id'],
                     filename = urllib.parse.quote(event._db['filename'])
                 )
-                event.url = event.download
+                params['url'] = params['download']
             else: # Not a download
-                event.url = self._handleCanonicalPrefix + event._db['handle']
+                params['url'] = self._handleCanonicalPrefix + event._db['handle']
                 # event.download does not get generated
+
+            params['token_auth'] = event._repo['matomo.token_auth']
+            params['cip'] = event._src['ip']
+
+            utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
+            params['cdt'] = datetime.strftime(utctime, "%Y-%m-%d %H:%M:%S")
+
+            event._matomoParams = params
+            event._matomoRequest = '?' + urllib.parse.urlencode(params)
             yield event
 
 
@@ -293,6 +306,64 @@ class DummyOutput:
             print(event.toJSON())
         logger.debug('DummyOutput finished processing {} events'.format(n))
 
+
+class MatomoOutput:
+
+    def __init__(self, repo):
+        self._repo = repo
+        self._repoProperties = repo.properties
+        self._requestsBuffer = []
+        self._lastTimestamp = None
+        try:
+            self._bulkTrackingBatchSize = int(self._repoProperties['matomo.batchSize'])
+            assert(self._bulkTrackingBatchSize > 0)
+        except:
+            self._bulkTrackingBatchSize = BULK_TRACKING_BATCH_SIZE_DEFAULT
+
+    def _appendToBuffer(self, event):
+        self._requestsBuffer.append(event._matomoRequest)
+        self._lastTimestamp = event._src['time']
+
+    def _flushBuffer(self):
+        data_dict = dict(
+            requests=self._requestsBuffer,
+            token_auth=self._repoProperties['matomo.token_auth']
+        )
+        num_events = len(self._requestsBuffer)
+        url = self._repoProperties['matomo.trackerUrl']
+
+        # print(json.dumps(data_dict, indent=4, sort_keys=True))
+        try:
+            http_response = requests.post(url, data = json.dumps(data_dict))
+            http_response.raise_for_status()
+            json_response = json.loads(http_response.text)
+            if json_response['status'] != "success" or json_response['invalid'] != 0:
+                raise ValueError(http_response.text)
+        except requests.exceptions.HTTPError as err:
+            logger.exception('HTTP error occurred: {}'.format(err))
+            raise
+        except:
+            logger.exception('Error while posting events to tracker. URL: {}. Data: {}'.format(url, data_dict))
+            raise
+
+        logger.debug('{} events sent to tracker'.format(num_events))
+        logger.debug('Local time for last event tracked: {}'.format(self._lastTimestamp))
+        self._repo.save_to_history('lastTrackedEventTimestamp', self._lastTimestamp)
+        self._requestsBuffer = []
+        self._lastTimestamp = None
+
+    def run(self, events):
+        n = 0
+        for event in events:
+            n += 1
+            self._appendToBuffer(event)
+            if (n % self._bulkTrackingBatchSize) == 0:
+                self._flushBuffer()
+        if (n % self._bulkTrackingBatchSize) != 0:
+            self._flushBuffer()
+        logger.debug('MatomoOutput finished processing {} events'.format(n))
+
+
 class EventPipelineBuilder:
 
     def __init__(self, args):
@@ -301,6 +372,9 @@ class EventPipelineBuilder:
     def build(self, repo):
         if self._args.date_from:
             initialTimestamp = self._args.date_from.strftime("%Y-%m-%dT00:00:00.000Z")
+        elif 'lastTrackedEventTimestamp' in repo.history.keys():
+            initialTimestamp = repo.history['lastTrackedEventTimestamp']
+            logger.debug('Loaded initialTimestamp from history: {}'.format(initialTimestamp))
         else:
             initialTimestamp = None
 
@@ -314,15 +388,17 @@ class EventPipelineBuilder:
                 SimpleHashSessionFilter(),
                 MatomoFilter(repo.dspaceProperties)
             ],
-            DummyOutput())
+            MatomoOutput(repo))
 
 
 class Repository:
 
-    def __init__(self, propertiesFilename):
+    def __init__(self, repoName, propertiesFilename):
+        self.repoName = repoName
         self.propertiesFilename = propertiesFilename
         self.properties = self._read_properties()
         self.dspaceProperties = self._read_dspace_properties()
+        self.history = self._load_history()
 
         self.solrServer = self._find_solr_server()
 
@@ -409,6 +485,49 @@ class Repository:
             logger.error("Solr Statistics Core Not Ready")
             raise RuntimeError
         return solrServer
+
+    def _load_history(self):
+        javaprops = JavaProperties()
+        property_dict = dict(lastTrackedEventTimestamp=None)
+        historyFileName = "{}/.{}".format(SAVE_DIR, self.repoName)
+
+        try:
+            with open(historyFileName) as f:
+                javaprops.load(f)
+            property_dict = javaprops.get_property_dict()
+            logger.debug("Read succesfully history file %s" % historyFileName)
+        except (FileNotFoundError, UnboundLocalError):
+            logger.debug("Could not read history file %s" % historyFileName)
+            pass
+
+        return property_dict
+
+
+    def save_to_history(self, key, value):
+        javaprops = JavaProperties()
+        historyFileName = "{}/.{}".format(SAVE_DIR, self.repoName)
+
+        try:
+            with open(historyFileName) as f:
+                javaprops.load(f)
+        except (FileNotFoundError, UnboundLocalError):
+            logger.debug("Could not read history file %s" % historyFileName)
+            pass
+
+        javaprops.set_property(key, value)
+
+        try:
+            basedir = os.path.dirname(historyFileName)
+            if not os.path.exists(basedir):
+                os.makedirs(basedir)
+            with open(historyFileName, mode='w') as f:
+                javaprops.store(f)
+            self.history = javaprops.get_property_dict()
+        except (FileNotFoundError, UnboundLocalError):
+            logger.debug("Could not save to history file %s" % historyFileName)
+            raise
+
+        return
 
 
 class DSpaceDB:
@@ -594,13 +713,13 @@ def main(args, loglevel):
     for repoName in args.repositories:
         logger.debug("START: %s" % repoName)
         propertiesFilename = "%s/%s.properties" % (args.config_dir, repoName)
-        repo = Repository(propertiesFilename)
+        repo = Repository(repoName, propertiesFilename)
         eventPipeline = EventPipelineBuilder(args).build(repo)
         eventPipeline.run()
         logger.debug("END: %s" % repoName)
 
-
 def parse_args():
+
 
     def valid_date_type(arg_date_str):
         """custom argparse *date* type for user dates values given from the command line"""
@@ -645,7 +764,7 @@ if __name__ == "__main__":
     if args.verbose:
         loglevel = logging.DEBUG
     else:
-        loglevel = logging.INFO
+        loglevel = logging.WARNING
 
     main(args, loglevel)
 
