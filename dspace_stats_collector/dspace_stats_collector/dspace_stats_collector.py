@@ -753,7 +753,7 @@ def parse_args():
     parser.add_argument("-c",
                         "--config_dir",
                         metavar="<dir>",
-                        default="./config",
+                        default="{}/config".format(os.path.dirname(os.path.realpath(__file__))),
                         help="path to configuration directory")
     parser.add_argument("-v",
                         "--verbose",
