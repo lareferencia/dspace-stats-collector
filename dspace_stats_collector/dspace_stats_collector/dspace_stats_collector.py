@@ -171,6 +171,8 @@ class SolrStatisticsInput:
             for doc in docs:
                 event = Event()
                 event._src = doc
+                if 'userAgent' not in doc.keys():
+                    event._src['userAgent'] = ''
                 yield event
 
 
@@ -286,7 +288,10 @@ class MatomoFilter:
             params['token_auth'] = event._repo['matomo.token_auth']
             params['cip'] = event._src['ip']
 
-            utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
+            try:
+                utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
+            except:
+                utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%SZ").astimezone(timezone('UTC'))
             params['cdt'] = datetime.strftime(utctime, "%Y-%m-%d %H:%M:%S")
 
             event._matomoParams = params
