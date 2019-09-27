@@ -25,7 +25,6 @@ logger = logging.getLogger()
 
 DESCRIPTION = """
 Collects Usage Stats from DSpace repositories.
-Repository names are used to load configuration parameters from <repo_name>.properties file.
 """
 BULK_TRACKING_BATCH_SIZE_DEFAULT = 50
 SAVE_DIR = os.path.expanduser('~') + '/.dspace_stats_collector'
@@ -737,22 +736,22 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("repositories",
-                        metavar="<repo_name>",
+                        metavar="REPOSITORYNAME",
                         nargs="+",
-                        help="name of repositories to collect usage stats from. Should match the name of the corresponding properties files in config dir")
+                        help="name of repositories to collect usage stats from. Should match the name of the corresponding .properties files in config dir")
     parser.add_argument("-f", "--date_from",
                         type=valid_date_type,
-                        metavar="<YYYY-MM-DD>",
+                        metavar="YYYY-MM-DD",
                         default=None,
                         help="collect events only from this date")
     parser.add_argument("-l",
                         "--limit",
-                        metavar="<n>",
+                        metavar="LIMIT",
                         type=int,
                         help="max number of events to output")
     parser.add_argument("-c",
                         "--config_dir",
-                        metavar="<dir>",
+                        metavar="DIR",
                         default="{}/config".format(os.path.dirname(os.path.realpath(__file__))),
                         help="path to configuration directory")
     parser.add_argument("-v",
