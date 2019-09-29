@@ -69,37 +69,6 @@ class EventPipeline:
         self._output_stage.run(events)
 
 
-class DummyInput:
-
-    def __init__(self):
-        None
-
-    def run(self):
-        for x in range(1,5):
-            event = Event()
-            event.id = "00" + str(x)
-            yield event
-
-
-class FileInput:
-
-    def __init__(self, filename):
-        self._filename = filename
-
-    def run(self):
-        try:
-            with open(self._filename, 'r') as content_file:
-                query_result = content_file.read()
-            r = json.loads(query_result)
-            for doc in r['response']['docs']:
-                event = Event()
-                event._src = doc
-                yield event
-        except (FileNotFoundError, json.decoder.JSONDecodeError, KeyError):
-            logger.exception("Error while trying to read events from {}".format(self._filename))
-            raise
-
-
 class TimestampCursor(object):
     """ Implements the concept of cursor in relational databases """
     def __init__(self, solr, query, timeout=100):
@@ -173,17 +142,6 @@ class SolrStatisticsInput:
                 if 'userAgent' not in doc.keys():
                     event._src['userAgent'] = ''
                 yield event
-
-
-class DummyFilter:
-
-    def __init__(self):
-        None
-
-    def run(self, events):
-        for event in events:
-            event.url = "http://dummy.org/" + str(event.id)
-            yield event
 
 
 class RepoPropertiesFilter:
@@ -298,19 +256,6 @@ class MatomoFilter:
             yield event
 
 
-class DummyOutput:
-
-    def __init__(self):
-        None
-
-    def run(self, events):
-        n = 0
-        for event in events:
-            n += 1
-            print(event.toJSON())
-        logger.debug('DummyOutput finished processing {} events'.format(n))
-
-
 class MatomoOutput:
 
     def __init__(self, repo):
@@ -383,7 +328,6 @@ class EventPipelineBuilder:
             initialTimestamp = None
 
         return EventPipeline(
-#            FileInput("../tests/sample_input.json"),
             SolrStatisticsInput(repo.solrServer, limit=self._args.limit,
                 initialTimestamp = initialTimestamp),
             [
