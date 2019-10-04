@@ -245,10 +245,19 @@ class MatomoFilter:
             params['token_auth'] = event._repo['matomo.token_auth']
             params['cip'] = event._src['ip']
 
+            
             try:
-                utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
+                utctime = event._src['time']
+                utctime = datetime.strptime(utctime, "%Y-%m-%dT%H:%M:%S.%fZ")
+                local_tz = timezone('UTC')
+                utctime = local_tz.localize(utctime)
+                #utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
             except:
-                utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%SZ").astimezone(timezone('UTC'))
+                utctime = event._src['time']
+                utctime = datetime.strptime(utctime, "%Y-%m-%dT%H:%M:%SfZ")
+                local_tz = timezone('UTC')
+                utctime = local_tz.localize(utctime)
+                #utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
             params['cdt'] = datetime.strftime(utctime, "%Y-%m-%d %H:%M:%S")
 
             event._matomoParams = params
