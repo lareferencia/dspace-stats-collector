@@ -53,12 +53,16 @@ class EventPipeline:
 
     _input_stage = None
     _filters_stage = []
-    _output_stage = None
+    _outputs_stage = []
 
-    def __init__(self, input, filters, output):
+    def __init__(self, input, filters, outputs):
         self._input_stage = input
         self._filters_stage = filters
-        self._output_stage = output
+
+        if not isinstance(outputs, list):
+            outputs = [outputs]
+
+        self._outputs_stage = outputs
 
     def run(self):
         events = self._input_stage.run()
@@ -66,7 +70,8 @@ class EventPipeline:
         for filter in self._filters_stage:
             events = filter.run(events)
 
-        self._output_stage.run(events)
+        for output in self._outputs_stage:
+            output.run(events)
 
 
 class TimestampCursor(object):
