@@ -20,6 +20,8 @@ from pyjavaprops.javaproperties import JavaProperties
 from dateutil import parser as dateutil_parser
 from datetime import datetime
 from pytz import timezone
+from elasticsearch import Elasticsearch
+
 
 logger = logging.getLogger()
 
@@ -71,7 +73,10 @@ class EventPipeline:
             events = filter.run(events)
 
         for output in self._outputs_stage:
-            output.run(events)
+            try:
+                output.run(events)
+            except Exception as e: 
+                print(e) #TODO: process this exception correctly 
 
 
 class TimestampCursor(object):
@@ -325,6 +330,26 @@ class MatomoOutput:
         if (n % self._bulkTrackingBatchSize) != 0:
             self._flushBuffer()
         logger.debug('MatomoOutput finished processing {} events'.format(n))
+
+
+class ElasticsearchOutput:
+
+    def __init__(self, repo):        
+        self.elasticServer = Elasticsearch([{'host': repo.properties['elastic.server'], 'port': int(repo.properties['elastic.port']) }])
+        self.indexName = repo.properties['elastic.index']
+
+    def _send(self, event):
+        result = self.elasticServer.index(index=self.indexName, doc_type='event', body=event.toJSON() )
+        logger.debug( "ElasticsearchOutpue Event: {} Result: {}".format(event, result['result']) )
+
+    def run(self, events):
+        n = 0
+        for event in events:
+            n += 1
+            self._send(event)
+
+        logger.debug('Elasticsearc Output finished processing {} events'.format(n))
+
 
 
 class EventPipelineBuilder:
