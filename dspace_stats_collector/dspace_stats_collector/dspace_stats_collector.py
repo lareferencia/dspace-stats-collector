@@ -21,7 +21,7 @@ from dateutil import parser as dateutil_parser
 from datetime import datetime
 from pytz import timezone
 from elasticsearch import Elasticsearch
-
+from itertools import tee
 
 logger = logging.getLogger()
 
@@ -60,10 +60,6 @@ class EventPipeline:
     def __init__(self, input, filters, outputs):
         self._input_stage = input
         self._filters_stage = filters
-
-        if not isinstance(outputs, list):
-            outputs = [outputs]
-
         self._outputs_stage = outputs
 
     def run(self):
@@ -72,9 +68,13 @@ class EventPipeline:
         for filter in self._filters_stage:
             events = filter.run(events)
 
-        for output in self._outputs_stage:
+        # create and event iterator for every output (tee return tuple of size n)
+        events_iter = tee(events, len(self._outputs_stage)) 
+       
+        # run each output stage on each event iterator
+        for i in range(0, len(self._outputs_stage)):
             try:
-                output.run(events)
+                self._outputs_stage[i].run(events_iter[i])
             except Exception as e: 
                 print(e) #TODO: process this exception correctly 
 
@@ -334,13 +334,24 @@ class MatomoOutput:
 
 class ElasticsearchOutput:
 
-    def __init__(self, repo):        
-        self.elasticServer = Elasticsearch([{'host': repo.properties['elastic.server'], 'port': int(repo.properties['elastic.port']) }])
+    def __init__(self, repo):
+
+        try:
+            ##self.elasticServer = Elasticsearch('https://elastic:wXYFb2YVX6Yd2A0lvM5fDKxx@92245714c70c48d6a707b40423677fe0.us-east-1.aws.found.io:9243')
+            self.elasticServer = Elasticsearch(repo.properties['elastic.url'])
+        except Exception as err:
+            logger.exception("Connection to elastic failed")
+        
         self.indexName = repo.properties['elastic.index']
 
     def _send(self, event):
-        result = self.elasticServer.index(index=self.indexName, doc_type='event', body=event.toJSON() )
-        logger.debug( "ElasticsearchOutpue Event: {} Result: {}".format(event, result['result']) )
+        
+        try:
+            result = self.elasticServer.index(index=self.indexName, doc_type='event', body=event.toJSON() )
+            #logger.debug( "ElasticsearchOutpue Event: {} Result: {}".format(event, result['result']) )
+        except:
+            logger.exception("Send event to elastic failed")
+
 
     def run(self, events):
         n = 0
@@ -375,7 +386,7 @@ class EventPipelineBuilder:
                 SimpleHashSessionFilter(),
                 MatomoFilter(repo.dspaceProperties)
             ],
-            MatomoOutput(repo))
+            [MatomoOutput(repo), ElasticsearchOutput(repo)])
 
 
 class Repository:
