@@ -72,9 +72,9 @@ class EventPipeline:
         events_iter = tee(events, len(self._outputs_stage)) 
        
         # run each output stage on each event iterator
-        for i in range(0, len(self._outputs_stage)):
+        for (output, teed_events) in zip(self._outputs_stage, events_iter):
             try:
-                self._outputs_stage[i].run(events_iter[i])
+                output.run(teed_events)
             except Exception as e: 
                 print(e) #TODO: process this exception correctly 
 
@@ -264,7 +264,7 @@ class MatomoFilter:
                 #utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
             except:
                 utctime = event._src['time']
-                utctime = datetime.strptime(utctime, "%Y-%m-%dT%H:%M:%SfZ")
+                utctime = datetime.strptime(utctime, "%Y-%m-%dT%H:%M:%SZ")
                 local_tz = timezone('UTC')
                 utctime = local_tz.localize(utctime)
                 #utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
