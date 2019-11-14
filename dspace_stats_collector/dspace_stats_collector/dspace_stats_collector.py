@@ -33,7 +33,7 @@ class EventPipelineBuilder:
                 SimpleHashSessionFilter(configContext),
                 MatomoFilter(configContext)
             ],
-            [MatomoOutput(configContext), ElasticsearchOutput(configContext)])
+            [MatomoOutput(configContext)]) #, ElasticsearchOutput(configContext)])
 
 
 def main(args, loglevel):

@@ -12,13 +12,12 @@ from datetime import datetime
 from pytz import timezone
 import requests
 
-
 BULK_TRACKING_BATCH_SIZE_DEFAULT = 50
-
 
 class MatomoFilter:
 
     def __init__(self, configContext):
+
         dspaceProperties = configContext.dspaceProperties
 
         if 'handle.canonical.prefix' in dspaceProperties.keys():
@@ -28,13 +27,15 @@ class MatomoFilter:
         self._dspaceHostname = dspaceProperties['dspace.hostname']
         self._dspaceUrl = dspaceProperties['dspace.url']
 
+        self._repoProperties = configContext.properties
+
     def run(self, events):
         for event in events:
             params = dict()
 
             # https://developer.matomo.org/api-reference/tracking-api
-            params['idsite'] = event._repo['matomo.idSite']
-            params['rec'] = event._repo['matomo.rec']
+            params['idsite'] = self._repoProperties['matomo.idSite']
+            params['rec'] = self._repoProperties['matomo.rec']
 
             params['action_name'] = event._db['record_title']
             params['_id'] = event._sess['id']
@@ -61,7 +62,7 @@ class MatomoFilter:
                 params['url'] = self._handleCanonicalPrefix + event._db['handle']
                 # event.download does not get generated
 
-            params['token_auth'] = event._repo['matomo.token_auth']
+            params['token_auth'] = self._repoProperties['matomo.token_auth']
             params['cip'] = event._src['ip']
 
             try:
