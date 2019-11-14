@@ -85,7 +85,7 @@ class MatomoFilter:
 
 
 class MatomoBulkOutput:
-
+#TODO: This matomo outputs will be used in combination with a general buffered output to be developedgit 
     def __init__(self, configContext):
         self._configContext = configContext
         self._configContextProperties = configContext.properties
@@ -95,7 +95,7 @@ class MatomoBulkOutput:
             requests=[event._matomoRequest for event in events],
             token_auth=self._configContextProperties['matomo.token_auth']
         )
-        num_events = len(events)
+        num_events = len(data_dict['requests'])
         url = self._configContextProperties['matomo.trackerUrl']
 
         try:
@@ -112,7 +112,7 @@ class MatomoBulkOutput:
             raise
 
         logger.debug('{} events sent to matomo tracker'.format(num_events))
-        logger.debug('MatomoOutput finished processing {} events'.format(n))
+        logger.debug('MatomoOutput finished processing {} events'.format(num_events))
 
 
 class MatomoOutput:

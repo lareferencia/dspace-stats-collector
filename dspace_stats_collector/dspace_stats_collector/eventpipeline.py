@@ -54,4 +54,3 @@ class EventPipeline:
                 output.run(teed_events)
             except Exception as e: 
                 print(e) #TODO: process this exception correctly 
-
