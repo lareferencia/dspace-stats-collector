@@ -17,7 +17,7 @@ from eventpipeline import *
 from solrinput import SolrStatisticsInput
 from dspacefilter import DSpaceDBFilter
 from sessionfilter import SimpleHashSessionFilter
-from matomooutput import MatomoFilter, MatomoOutput
+from matomooutput import MatomoFilter, MatomoOutput, MatomoBulkOutput
 from elasticoutput import ElasticsearchOutput
 
 DESCRIPTION = """
@@ -33,7 +33,9 @@ class EventPipelineBuilder:
                 SimpleHashSessionFilter(configContext),
                 MatomoFilter(configContext)
             ],
-            [MatomoOutput(configContext)]) #, ElasticsearchOutput(configContext)])
+            [   MatomoBulkOutput(configContext) 
+            #    ,ElasticsearchOutput(configContext)
+            ])
 
 
 def main(args, loglevel):

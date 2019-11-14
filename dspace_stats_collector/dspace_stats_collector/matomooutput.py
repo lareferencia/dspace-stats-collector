@@ -83,6 +83,38 @@ class MatomoFilter:
             event._matomoRequest = '?' + urllib.parse.urlencode(params)
             yield event
 
+
+class MatomoBulkOutput:
+
+    def __init__(self, configContext):
+        self._configContext = configContext
+        self._configContextProperties = configContext.properties
+                 
+    def run(self, events):
+        data_dict = dict(
+            requests=[event._matomoRequest for event in events],
+            token_auth=self._configContextProperties['matomo.token_auth']
+        )
+        num_events = len(events)
+        url = self._configContextProperties['matomo.trackerUrl']
+
+        try:
+            http_response = requests.post(url, data = json.dumps(data_dict))
+            http_response.raise_for_status()
+            json_response = json.loads(http_response.text)
+            if json_response['status'] != "success" or json_response['invalid'] != 0:
+                raise ValueError(http_response.text)
+        except requests.exceptions.HTTPError as err:
+            logger.exception('HTTP error occurred: {}'.format(err))
+            raise
+        except:
+            logger.exception('Error while posting events to tracker. URL: {}. Data: {}'.format(url, data_dict))
+            raise
+
+        logger.debug('{} events sent to matomo tracker'.format(num_events))
+        logger.debug('MatomoOutput finished processing {} events'.format(n))
+
+
 class MatomoOutput:
 
     def __init__(self, configContext):
