@@ -33,7 +33,7 @@ class EventPipelineBuilder:
                 SimpleHashSessionFilter(configContext),
                 MatomoFilter(configContext)
             ],
-            [   MatomoBulkOutput(configContext) 
+            [   MatomoOutput(configContext) 
             #    ,ElasticsearchOutput(configContext)
             ])
 
