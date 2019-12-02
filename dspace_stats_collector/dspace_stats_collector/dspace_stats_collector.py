@@ -9,7 +9,7 @@ import json
 import sys
 import argparse
 import os
-import datetime
+from datetime import datetime
 
 from configcontext import ConfigurationContext
 from eventpipeline import *

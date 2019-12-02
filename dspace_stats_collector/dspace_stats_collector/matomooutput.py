@@ -65,19 +65,21 @@ class MatomoFilter:
             params['token_auth'] = self._repoProperties['matomo.token_auth']
             params['cip'] = event._src['ip']
 
-            try:
-                utctime = event._src['time']
-                utctime = datetime.strptime(utctime, "%Y-%m-%dT%H:%M:%S.%fZ")
-                local_tz = timezone('UTC')
-                utctime = local_tz.localize(utctime)
-                #utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
+            srctime = event._src['time']
+            try:  # parse with or without milliseconds
+                srctime = datetime.strptime(srctime, "%Y-%m-%dT%H:%M:%S.%fZ")
             except:
-                utctime = event._src['time']
-                utctime = datetime.strptime(utctime, "%Y-%m-%dT%H:%M:%SZ")
+                srctime = datetime.strptime(srctime, "%Y-%m-%dT%H:%M:%SZ")
+
+            try:  # if env locale is ok
+                utctime = srctime.astimezone(timezone('UTC'))
+            except:  # otherwise (naive datetime without timezone yet), report solr time as utc without converting
                 local_tz = timezone('UTC')
-                utctime = local_tz.localize(utctime)
-                #utctime = datetime.strptime(event._src['time'], "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone('UTC'))
+                utctime = local_tz.localize(srctime)
+
             params['cdt'] = datetime.strftime(utctime, "%Y-%m-%d %H:%M:%S")
+            logger.debug('SOLR time {} got converted to UTC: {}'.format(event._src['time'], params['cdt']))
+
 
             event._matomoParams = params
             event._matomoRequest = '?' + urllib.parse.urlencode(params)
