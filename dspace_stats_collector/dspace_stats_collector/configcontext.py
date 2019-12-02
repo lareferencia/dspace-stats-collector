@@ -39,7 +39,7 @@ class ConfigurationContext:
         self.solrStatsCoreURL = self.solrServerURL + "/" + self.solrStatsCoreName
 
         # COUNTER Robots
-        self.counterRobotsFilename = "%s/" + COUNTER_ROBOTS_FILE % (commandLineArgs.config_dir)
+        self.counterRobotsFilename = ("%s/" + COUNTER_ROBOTS_FILE) % (commandLineArgs.config_dir)
 
         # Solr Query parameters -     
         if commandLineArgs.date_from:

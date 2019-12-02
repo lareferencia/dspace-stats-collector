@@ -18,7 +18,7 @@ class COUNTERRobotsFilter:
             counterRobotsList = json.load(json_file)
 
         for p in counterRobotsList:
-            p['compiled'] = re.compile(p['pattern'])
+            p['compiled_re'] = re.compile(p['pattern'])
 
         return counterRobotsList
 
@@ -33,7 +33,7 @@ class COUNTERRobotsFilter:
             for robot in self.counterRobots:
                 is_robot = is_robot or robot['compiled_re'].search(user_agent)
                 if is_robot:
-                    logger.debug('Robot detected %s'.format(user_agent))
+                    logger.debug('Robot detected {}'.format(user_agent))
                     break
             
             # yield event only if not is a robot, else is discarted 
