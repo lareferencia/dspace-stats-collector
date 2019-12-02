@@ -19,6 +19,7 @@ from dspacefilter import DSpaceDBFilter
 from sessionfilter import SimpleHashSessionFilter
 from matomooutput import MatomoFilter, MatomoOutput, MatomoBulkOutput
 from elasticoutput import ElasticsearchOutput
+from counterfilter import COUNTERRobotsFilter
 
 DESCRIPTION = """
 Collects Usage stats from DSpace repositories.
@@ -29,6 +30,7 @@ class EventPipelineBuilder:
         return EventPipeline(
             SolrStatisticsInput(configContext),
             [
+                COUNTERRobotsFilter(configContext),
                 DSpaceDBFilter(configContext),
                 SimpleHashSessionFilter(configContext),
                 MatomoFilter(configContext)

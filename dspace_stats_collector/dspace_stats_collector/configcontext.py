@@ -17,6 +17,7 @@ SOLR_STATS_CORE_NAME = "statistics"
 TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
 HISTORY_LAST_TIMESTAMP_FIELDNAME = 'lastTrackedEventTimestamp'
 SOLR_QUERY_ROWS_SIZE = 10
+COUNTER_ROBOTS_FILE = 'COUNTER_Robots_list.json'
 
 class ConfigurationContext:
 
@@ -36,6 +37,9 @@ class ConfigurationContext:
         self.solrStatsCoreName = SOLR_STATS_CORE_NAME
         self.solrServerURL = self._find_solr_server()
         self.solrStatsCoreURL = self.solrServerURL + "/" + self.solrStatsCoreName
+
+        # COUNTER Robots
+        self.counterRobotsFilename = "%s/" + COUNTER_ROBOTS_FILE % (commandLineArgs.config_dir)
 
         # Solr Query parameters -     
         if commandLineArgs.date_from:

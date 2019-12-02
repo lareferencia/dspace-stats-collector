@@ -85,7 +85,7 @@ class MatomoFilter:
 
 
 class MatomoBulkOutput:
-#TODO: This matomo outputs will be used in combination with a general buffered output to be developedgit 
+#TODO: This matomo outputs will be used in combination with a general buffered output to be developed
     def __init__(self, configContext):
         self._configContext = configContext
         self._configContextProperties = configContext.properties

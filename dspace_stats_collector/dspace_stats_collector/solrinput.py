@@ -75,7 +75,7 @@ class SolrStatisticsInput:
             'sort': 'time asc',
             'start': 0,
             'wt': 'json',
-            'fq': '+statistics_type:"view" +isBot:false +type:(0 OR 2)',
+            'fq': '+statistics_type:"view" +type:(0 OR 2)',
             'fl': 'id,ip,owningItem,referrer,time,type,userAgent'
         })
         for docs in cursor.fetch(rows=self._rows, limit=self._limit, initialTimestamp = self._initialTimestamp):
