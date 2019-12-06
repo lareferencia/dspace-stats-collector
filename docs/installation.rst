@@ -12,7 +12,7 @@ To install Dspace usage stats collector, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install dspace_stats_collector
+    $ pip install dspace-stats-collector
 
 This is the preferred method to install Dspace usage stats collector, as it will always install the most recent stable release.
 
@@ -32,13 +32,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/lareferencia/dspace_stats_collector
+    $ git clone git://github.com/lareferencia/lareferencia-usage-stats
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/lareferencia/dspace_stats_collector/tarball/master
+    $ curl  -OL https://github.com/lareferencia/lareferencia-usage-stats/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/lareferencia/dspace_stats_collector
-.. _tarball: https://github.com/lareferencia/dspace_stats_collector/tarball/master
+.. _Github repo: https://github.com/lareferencia/lareferencia-usage-stats
+.. _tarball: https://github.com/lareferencia/lareferencia-usage-stats/tarball/master
