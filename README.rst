@@ -16,7 +16,7 @@ Dspace usage stats collector
 
 
 
-A python library for usage stats events in Dspace
+A python agent for sending DSpace usage statistics events to Matomo and ELK Stack. 
 
 
 * Free software: GNU General Public License v3
@@ -26,10 +26,10 @@ A python library for usage stats events in Dspace
 Features
 --------
 
-* TODO
 
 Credits
 -------
+
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
