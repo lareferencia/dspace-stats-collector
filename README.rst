@@ -12,6 +12,10 @@ Dspace usage stats collector
 .. image:: https://readthedocs.org/projects/dspace-stats-collector/badge/?version=latest
         :target: https://dspace-stats-collector.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
+        
+.. image:: https://img.shields.io/pypi/l/dspace_stats_collector.svg
+        :target: https://pypi.python.org/pypi/dspace_stats_collector
+        :alt: License
 
 
 
