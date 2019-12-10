@@ -6,7 +6,7 @@
 import pytest
 
 
-from dspace_stats_collector import dspace_stats_collector
+import dspace_stats_collector
 
 
 # @pytest.fixture
