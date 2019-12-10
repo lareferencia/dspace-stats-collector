@@ -158,7 +158,7 @@ class MatomoOutput:
 
         logger.debug('{} events sent to tracker'.format(num_events))
         logger.debug('Local time for last event tracked: {}'.format(self._lastTimestamp))
-        self._configContext.save_to_history('lastTrackedEventTimestamp', self._lastTimestamp)
+        self._configContext.save_last_tracked_timestamp(self._lastTimestamp)
         self._requestsBuffer = []
         self._lastTimestamp = None
 

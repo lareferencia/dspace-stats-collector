@@ -18,6 +18,7 @@ TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
 HISTORY_LAST_TIMESTAMP_FIELDNAME = 'lastTrackedEventTimestamp'
 SOLR_QUERY_ROWS_SIZE = 10
 COUNTER_ROBOTS_FILE = 'COUNTER_Robots_list.json'
+LAST_TRACKED_TIMESTAMP_HISTORY_FIELD = 'lastTrackedEventTimestamp'
 
 class ConfigurationContext:
 
@@ -163,7 +164,10 @@ class ConfigurationContext:
         return property_dict
 
 
-    def save_to_history(self, key, value):
+    def save_last_tracked_timestamp(self, timestamp):
+        self._save_to_history(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, timestamp)
+
+    def _save_to_history(self, key, value):
         javaprops = JavaProperties()
         historyFileName = "{}/.{}".format(self.historyFilePath, self.repoName)
 
