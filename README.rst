@@ -3,18 +3,18 @@ Dspace usage stats collector
 ============================
 
 
-.. image:: https://img.shields.io/pypi/v/dspace_stats_collector.svg
-        :target: https://pypi.python.org/pypi/dspace_stats_collector
+.. image:: https://img.shields.io/pypi/v/dspace-usage-stats-collector.svg
+        :target: https://pypi.python.org/pypi/dspace-usage-stats-collector
 
-.. image:: https://img.shields.io/travis/lareferencia/lareferencia-usage-stats.svg
-        :target: https://travis-ci.org/lareferencia/lareferencia-usage-stats
+.. image:: https://img.shields.io/travis/lareferencia/dspace-usage-stats-collector.svg
+        :target: https://travis-ci.org/lareferencia/dspace-usage-stats-collector
 
-.. image:: https://readthedocs.org/projects/dspace-stats-collector/badge/?version=latest
-        :target: https://dspace-stats-collector.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/dspace-usage-stats-collector/badge/?version=latest
+        :target: https://dspace-usage-stats-collector.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
         
-.. image:: https://img.shields.io/pypi/l/dspace_stats_collector.svg
-        :target: https://pypi.python.org/pypi/dspace_stats_collector
+.. image:: https://img.shields.io/pypi/l/dspace-usage-stats-collector.svg
+        :target: https://pypi.python.org/pypi/dspace-usage-stats-collector
         :alt: License
 
 
