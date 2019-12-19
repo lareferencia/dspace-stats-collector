@@ -10,15 +10,42 @@ import argparse
 import os
 from datetime import datetime
 
-from configcontext import ConfigurationContext
-from eventpipeline import *
 
-from solrinput import SolrStatisticsInput
-from dspacefilter import DSpaceDBFilter
-from sessionfilter import SimpleHashSessionFilter
-from matomooutput import MatomoFilter, MatomoOutput, MatomoBulkOutput
-#from elasticoutput import ElasticsearchOutput
-from counterfilter import COUNTERRobotsFilter
+try:
+    from .configcontext import ConfigurationContext
+except Exception: #ImportError
+    from configcontext import ConfigurationContext
+
+try:
+    from .eventpipeline import *
+except Exception: #ImportError
+    from eventpipeline import *
+
+try:
+    from .solrinput import SolrStatisticsInput
+except Exception: #ImportError
+    from solrinput import SolrStatisticsInput
+
+try:
+    from .dspacefilter import DSpaceDBFilter
+except Exception: #ImportError
+    from dspacefilter import DSpaceDBFilter
+
+try:
+    from .sessionfilter import SimpleHashSessionFilter
+except Exception: #ImportError
+    from sessionfilter import SimpleHashSessionFilter
+
+try:
+    from .matomooutput import MatomoFilter, MatomoOutput, MatomoBulkOutput
+except Exception: #ImportError
+   from matomooutput import MatomoFilter, MatomoOutput, MatomoBulkOutput
+
+try:
+    from .counterfilter import COUNTERRobotsFilter
+except Exception: #ImportError
+   from counterfilter import COUNTERRobotsFilter
+
 
 DESCRIPTION = """
 Collects Usage stats from DSpace repositories.

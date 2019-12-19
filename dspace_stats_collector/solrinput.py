@@ -8,7 +8,10 @@ logger = logging.getLogger()
 import json
 import pysolr
 
-from eventpipeline import Event
+try:
+    from .eventpipeline import Event
+except Exception: #ImportError
+    from eventpipeline import Event
 
 class TimestampCursor(object):
     """ Implements the concept of cursor in relational databases """

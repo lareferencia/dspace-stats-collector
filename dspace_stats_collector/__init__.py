@@ -8,4 +8,4 @@ __version__ = '0.1.0'
 
 __name__ = "dspace_stats_collector"
 __package__ = "dspace_stats_collector"
-__all__ = ['collector']
+__all__ = ['collector', 'configcontext', 'eventpipeline', 'counterfilter', 'dspacedb', 'dspacefilter', 'matomootuput', 'sessionfilter', 'solrinput']

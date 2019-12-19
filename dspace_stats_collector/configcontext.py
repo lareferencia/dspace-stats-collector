@@ -6,11 +6,14 @@ import logging
 logger = logging.getLogger()
 
 from pyjavaprops.javaproperties import JavaProperties
-from dspacedb import DSpaceDB
 import json
 import requests
 import os
 
+try:
+    from .dspacedb import DSpaceDB
+except Exception: #ImportError
+    from dspacedb import DSpaceDB
 
 SAVE_DIR = os.path.expanduser('~') + '/.dspace_stats_collector'
 DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-usage-stats-collector"
@@ -23,7 +26,7 @@ LAST_TRACKED_TIMESTAMP_HISTORY_FIELD = 'lastTrackedEventTimestamp'
 
 class ConfigurationContext:
 
-    self.defaultInstallPath = DEFAULT_INSTALL_PATH
+    defaultInstallPath = DEFAULT_INSTALL_PATH
 
     def __init__(self, repoName, commandLineArgs):
         
