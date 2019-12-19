@@ -11,11 +11,25 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
+#with open('requirements.txt') as required_file:
+#    requirements = required_file.read().splitlines()
+
 requirements = [ ]
 
 setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
+
+#package_data={
+        # And include any found in the 'config' subdirectory
+#        'config': ['config/*.*'],
+#}
+
+entry_points={
+        'console_scripts': [
+            "dspace-stats-collector = dspace_stats_collector.collector:main"
+        ]
+    },
 
 setup(
     author="LA Referencia",
@@ -33,7 +47,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    description="A python library for usage stats events in Dspace",
+    description="A python library for sending usage stats events from Dspace to Matomo & ELK",
     install_requires=requirements,
     license="GNU General Public License v3",
     long_description=readme + '\n\n' + history,
@@ -41,10 +55,12 @@ setup(
     keywords='dspace_stats_collector',
     name='dspace_stats_collector',
     packages=find_packages(include=['dspace_stats_collector']),
+    entry_points=entry_points,
+ #   package_data=package_data,
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/lareferencia/dspace_stats_collector',
+    url='https://github.com/lareferencia/dspace-usage-stats-collector',
     version='0.1.0',
     zip_safe=False,
 )

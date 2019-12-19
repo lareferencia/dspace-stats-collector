@@ -20,5 +20,5 @@ pandas==0.23.4
 urllib3==1.24.2
 pytz==2018.7
 
-elasticsearch>=7.0.5  
+#elasticsearch>=7.0.5  
 

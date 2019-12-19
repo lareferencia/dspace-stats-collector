@@ -13,14 +13,17 @@ import os
 
 
 SAVE_DIR = os.path.expanduser('~') + '/.dspace_stats_collector'
+DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-usage-stats-collector"
+
 SOLR_STATS_CORE_NAME = "statistics"
 TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
-HISTORY_LAST_TIMESTAMP_FIELDNAME = 'lastTrackedEventTimestamp'
 SOLR_QUERY_ROWS_SIZE = 10
 COUNTER_ROBOTS_FILE = 'COUNTER_Robots_list.json'
 LAST_TRACKED_TIMESTAMP_HISTORY_FIELD = 'lastTrackedEventTimestamp'
 
 class ConfigurationContext:
+
+    self.defaultInstallPath = DEFAULT_INSTALL_PATH
 
     def __init__(self, repoName, commandLineArgs):
         
@@ -45,8 +48,8 @@ class ConfigurationContext:
         # Solr Query parameters -     
         if commandLineArgs.date_from:
             self.solrQueryInitialTimestamp = commandLineArgs.date_from.strftime(TIMESTAMP_PATTERN)
-        elif 'lastTrackedEventTimestamp' in self.history.keys():
-            self.solrQueryInitialTimestamp = self.history[HISTORY_LAST_TIMESTAMP_FIELDNAME]
+        elif LAST_TRACKED_TIMESTAMP_HISTORY_FIELD in self.history.keys():
+            self.solrQueryInitialTimestamp = self.history[LAST_TRACKED_TIMESTAMP_HISTORY_FIELD]
             logger.debug('Loaded initialTimestamp from history: {}'.format(self.solrQueryInitialTimestamp))
         else:
             self.solrQueryInitialTimestamp = None

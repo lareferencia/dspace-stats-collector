@@ -24,7 +24,7 @@ A python agent for sending DSpace usage statistics events to Matomo and ELK Stac
 
 
 * Free software: GNU General Public License v3
-* Documentation: https://dspace-stats-collector.readthedocs.io.
+* Documentation: https://dspace-usage-stats-collector.readthedocs.io.
 
 
 Features

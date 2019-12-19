@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """ Main / Command line tool """
-
 import logging
 logger = logging.getLogger()
 
@@ -18,7 +17,7 @@ from solrinput import SolrStatisticsInput
 from dspacefilter import DSpaceDBFilter
 from sessionfilter import SimpleHashSessionFilter
 from matomooutput import MatomoFilter, MatomoOutput, MatomoBulkOutput
-from elasticoutput import ElasticsearchOutput
+#from elasticoutput import ElasticsearchOutput
 from counterfilter import COUNTERRobotsFilter
 
 DESCRIPTION = """
@@ -88,7 +87,7 @@ def parse_args():
     parser.add_argument("-c",
                         "--config_dir",
                         metavar="DIR",
-                        default="{}/config".format(os.path.dirname(os.path.realpath(__file__))),
+                        default="{}/{}".format(ConfigurationContext.defaultInstallPath,'config'),
                         help="path to configuration directory")
     parser.add_argument("-v",
                         "--verbose",
