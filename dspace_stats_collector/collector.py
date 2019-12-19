@@ -66,13 +66,21 @@ class EventPipelineBuilder:
             ])
 
 
-def main(args, loglevel):
+def main():
+
+    args = parse_args()
+
+    if args.verbose:
+        loglevel = logging.DEBUG
+    else:
+        loglevel = logging.WARNING
 
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     logger.debug("Verbose: %s" % args.verbose)
     logger.debug("Repositories: %s" % args.repositories)
     logger.debug("Configuration Directory: %s" % args.config_dir)
     logger.debug("Limit: %s" % args.limit)
+    
     if args.date_from:
         logger.debug("Date from: %s" % args.date_from.strftime("%Y-%m-%d"))
 
@@ -125,12 +133,5 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    args = parse_args()
-
-    if args.verbose:
-        loglevel = logging.DEBUG
-    else:
-        loglevel = logging.WARNING
-
-    main(args, loglevel)
+    main()
 
