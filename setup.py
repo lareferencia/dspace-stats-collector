@@ -29,7 +29,7 @@ entry_points={
         'console_scripts': [
             "dspace-stats-collector = dspace_stats_collector.collector:main"
         ]
-    },
+}
 
 setup(
     author="LA Referencia",
