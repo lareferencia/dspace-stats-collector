@@ -4,7 +4,7 @@
 
 __author__ = """LA Referencia"""
 __email__ = 'lareferencia.dev@gmail.com'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 __name__ = "dspace_stats_collector"
 __package__ = "dspace_stats_collector"
