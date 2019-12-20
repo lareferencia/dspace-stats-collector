@@ -77,21 +77,23 @@ def main():
 
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     logger.debug("Verbose: %s" % args.verbose)
-    logger.debug("Repositories: %s" % args.repositories)
+    logger.debug("Repository: %s" % args.repository)
     logger.debug("Configuration Directory: %s" % args.config_dir)
     logger.debug("Limit: %s" % args.limit)
     
     if args.date_from:
         logger.debug("Date from: %s" % args.date_from.strftime("%Y-%m-%d"))
 
-    for repoName in args.repositories:
-        logger.debug("START: %s" % repoName)
-        
-        configContext = ConfigurationContext(repoName, args)
+    #for repoName in args.repositories:
+    repoName=args.repository
 
-        eventPipeline = EventPipelineBuilder().build(configContext)
-        eventPipeline.run()
-        logger.debug("END: %s" % repoName)
+    logger.debug("START: %s" % repoName)
+    
+    configContext = ConfigurationContext(repoName, args)
+
+    eventPipeline = EventPipelineBuilder().build(configContext)
+    eventPipeline.run()
+    logger.debug("END: %s" % repoName)
 
 def parse_args():
 
@@ -107,8 +109,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("-r", "--repository",
                         metavar="REPOSITORYNAME",
-                        default='default',
-                        help="name of repository to collect usage stats from. Should match the name of the corresponding .properties files in config dir")
+                        default=['default'],
+                        help="name of repositories to collect usage stats from. Should match the name of the corresponding .properties files in config dir")
     parser.add_argument("-f", "--date_from",
                         type=valid_date_type,
                         metavar="YYYY-MM-DD",
