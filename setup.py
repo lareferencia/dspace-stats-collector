@@ -14,7 +14,7 @@ with open('HISTORY.rst') as history_file:
 #with open('requirements.txt') as required_file:
 #    requirements = required_file.read().splitlines()
 
-requirements = [ ]
+requirements = []
 
 setup_requirements = ['pytest-runner', ]
 
@@ -59,6 +59,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/lareferencia/dspace-stats-collector',
-    version='0.1.2',
+    version='0.1.7',
     zip_safe=False,
 )

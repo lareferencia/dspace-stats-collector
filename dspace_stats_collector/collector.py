@@ -107,7 +107,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("repositories",
                         metavar="REPOSITORYNAME",
-                        #nargs="+",
+                        nargs="+",
                         default='default',
                         help="name of repositories to collect usage stats from. Should match the name of the corresponding .properties files in config dir")
     parser.add_argument("-f", "--date_from",

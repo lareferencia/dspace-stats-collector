@@ -1,10 +1,6 @@
 #!/bin/sh
 #
 
-function validate_url(){
-  if [[ `wget -S --spider $1  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then echo "true"; fi
-}
-
 INSTALL_PATH=$HOME/dspace-stats-collector
 MINICONDA_URL_PREFIX='https://repo.anaconda.com/miniconda/'
 
