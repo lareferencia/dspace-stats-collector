@@ -105,11 +105,10 @@ def parse_args():
             raise argparse.ArgumentTypeError(msg)
 
     parser = argparse.ArgumentParser(description=DESCRIPTION)
-    parser.add_argument("repositories",
+    parser.add_argument("-r", "--repository",
                         metavar="REPOSITORYNAME",
-                        nargs="+",
                         default='default',
-                        help="name of repositories to collect usage stats from. Should match the name of the corresponding .properties files in config dir")
+                        help="name of repository to collect usage stats from. Should match the name of the corresponding .properties files in config dir")
     parser.add_argument("-f", "--date_from",
                         type=valid_date_type,
                         metavar="YYYY-MM-DD",
