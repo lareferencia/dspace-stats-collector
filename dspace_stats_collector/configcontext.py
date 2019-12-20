@@ -16,7 +16,7 @@ except Exception: #ImportError
     from dspacedb import DSpaceDB
 
 SAVE_DIR = os.path.expanduser('~') + '/.dspace_stats_collector'
-DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-usage-stats-collector"
+DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-stats-collector"
 
 SOLR_STATS_CORE_NAME = "statistics"
 TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
