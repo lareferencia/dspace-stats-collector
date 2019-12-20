@@ -17,6 +17,9 @@ except Exception: #ImportError
 
 SAVE_DIR = os.path.expanduser('~') + '/.dspace_stats_collector'
 DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-stats-collector"
+DEFAULT_COLLECTOR_COMMAND_NAME="dspace-stats-collector"
+DEFAULT_CONFIG_PATH = DEFAULT_INSTALL_PATH + "/config"
+
 
 SOLR_STATS_CORE_NAME = "statistics"
 TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
@@ -27,6 +30,8 @@ LAST_TRACKED_TIMESTAMP_HISTORY_FIELD = 'lastTrackedEventTimestamp'
 class ConfigurationContext:
 
     defaultInstallPath = DEFAULT_INSTALL_PATH
+    defaultConfigPath = DEFAULT_CONFIG_PATH
+    defaultCollectorCommand = DEFAULT_COLLECTOR_COMMAND_NAME
 
     def __init__(self, repoName, commandLineArgs):
         

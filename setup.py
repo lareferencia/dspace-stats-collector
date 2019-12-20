@@ -27,7 +27,9 @@ test_requirements = ['pytest', ]
 
 entry_points={
         'console_scripts': [
-            "dspace-stats-collector = dspace_stats_collector.collector:main"
+            "dspace-stats-collector = dspace_stats_collector.collector:main",
+            "dspace-stats-cronify = dspace_stats_collector.croninstaller:main"
+
         ]
 }
 
@@ -35,12 +37,8 @@ setup(
     author="LA Referencia",
     author_email='lareferencia.dev@gmail.com',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
