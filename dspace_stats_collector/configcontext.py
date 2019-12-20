@@ -9,6 +9,7 @@ from pyjavaprops.javaproperties import JavaProperties
 import json
 import requests
 import os
+import sys
 
 try:
     from .dspacedb import DSpaceDB
@@ -81,8 +82,9 @@ class ConfigurationContext:
             javaprops.load(open(self.propertiesFilename))
             property_dict = javaprops.get_property_dict()
         except (FileNotFoundError, UnboundLocalError):
-            logger.exception("Error while trying to read properties file %s" % self.propertiesFilename)
-            raise
+            logger.error("Error while trying to read properties file %s" % self.propertiesFilename)
+            sys.exit()
+            #raise
 
         logger.debug("Read succesfully property file %s" % self.propertiesFilename)
         return property_dict
