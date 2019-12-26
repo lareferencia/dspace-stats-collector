@@ -36,6 +36,7 @@ class MatomoFilter:
             # https://developer.matomo.org/api-reference/tracking-api
             params['idsite'] = self._repoProperties['matomo.idSite']
             params['rec'] = self._repoProperties['matomo.rec']
+            parans['_cvar'] = { "1":["repositoryId",self._repoProperties['matomo.repositoryId']] }
 
             params['action_name'] = event._db['record_title']
             params['_id'] = event._sess['id']
