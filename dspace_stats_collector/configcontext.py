@@ -33,11 +33,13 @@ class ConfigurationContext:
     defaultInstallPath = DEFAULT_INSTALL_PATH
     defaultConfigPath = DEFAULT_CONFIG_PATH
     defaultCollectorCommand = DEFAULT_COLLECTOR_COMMAND_NAME
+    defaultRepository = 'default'
+    counterRobotsFileName = COUNTER_ROBOTS_FILE
 
     def __init__(self, repoName, commandLineArgs):
         
         self.repoName = repoName
-        self.propertiesFilename = "%s/%s.properties" % (commandLineArgs.config_dir, repoName)
+        self.propertiesFilename = ConfigurationContext.getPropertiesFieldPath(commandLineArgs.config_dir, repoName)
 
         self.properties = self._read_properties()
         self.dspaceProperties = self._read_dspace_properties()
@@ -52,7 +54,7 @@ class ConfigurationContext:
         self.solrStatsCoreURL = self.solrServerURL + "/" + self.solrStatsCoreName
 
         # COUNTER Robots
-        self.counterRobotsFilename = ("%s/" + COUNTER_ROBOTS_FILE) % (commandLineArgs.config_dir)
+        self.counterRobotsFilename = ("%s/" + ConfigurationContext.counterRobotsFileName) % (commandLineArgs.config_dir)
 
         # Solr Query parameters -     
         if commandLineArgs.date_from:
@@ -74,6 +76,9 @@ class ConfigurationContext:
                         self.properties['dspace.majorVersion']
                     )
 
+    @staticmethod
+    def getPropertiesFieldPath(config_dir, repoName):
+        return "%s/%s.properties" % (config_dir, repoName)
 
     def _read_properties(self):
         javaprops = JavaProperties()

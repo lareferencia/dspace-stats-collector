@@ -109,8 +109,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("-r", "--repository",
                         metavar="REPOSITORYNAME",
-                        default='default',
-                        help="name of repositories to collect usage stats from. Should match the name of the corresponding .properties files in config dir")
+                        default=ConfigurationContext.defaultRepository,
+                        help="name of repository to collect usage stats from. Should match the name of the corresponding .properties files in config dir")
     parser.add_argument("-f", "--date_from",
                         type=valid_date_type,
                         metavar="YYYY-MM-DD",
@@ -124,7 +124,7 @@ def parse_args():
     parser.add_argument("-c",
                         "--config_dir",
                         metavar="DIR",
-                        default= ConfigurationContext.defaultConfigPath,
+                        default=ConfigurationContext.defaultConfigPath,
                         help="path to configuration directory")
     parser.add_argument("-v",
                         "--verbose",

@@ -29,6 +29,7 @@ entry_points={
         'console_scripts': [
             "dspace-stats-collector = dspace_stats_collector.collector:main",
             "dspace-stats-cronify = dspace_stats_collector.croninstaller:main"
+            "dspace-stats-configure = dspace_stats_collector.configure:main"
 
         ]
 }
