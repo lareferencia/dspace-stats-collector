@@ -28,6 +28,9 @@ bash $MINICONDA_FILE -b -f -p $INSTALL_PATH
 
 cd $INSTALL_PATH
 
+echo "Installing dspace-stats-collector package"
+$INSTALL_PATH/bin/pip install dspace-stats-collector
+
 echo "Installing config files"
 $INSTALL_PATH/bin/dspace-stats-configure
 
