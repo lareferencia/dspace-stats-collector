@@ -36,8 +36,6 @@ class MatomoFilter:
             # https://developer.matomo.org/api-reference/tracking-api
             params['idsite'] = self._repoProperties['matomo.idSite']
             params['rec'] = self._repoProperties['matomo.rec']
-            parans['_cvar'] = { "1":["repositoryId",self._repoProperties['matomo.repositoryId']] }
-
             params['action_name'] = event._db['record_title']
             params['_id'] = event._sess['id']
             params['rand'] = random.randint(1e5,1e6)
@@ -49,7 +47,7 @@ class MatomoFilter:
             params['ua'] = event._src['userAgent']
 
             oaipmhID = "oai:{}:{}".format(self._dspaceHostname, event._db['handle'])
-            params['cvar'] = json.dumps({"1": ["oaipmhID", oaipmhID]})
+            params['cvar'] = json.dumps({"1": ["oaipmhID", oaipmhID], "2": ["repositoryID",self._repoProperties['matomo.repositoryId']] })
 
             if event._db['is_download']:
                 params['download'] = "{dspaceUrl}/bitstream/{handle}/{sequence_id}/{filename}".format(
