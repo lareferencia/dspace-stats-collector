@@ -28,7 +28,7 @@ test_requirements = ['pytest', ]
 entry_points={
         'console_scripts': [
             "dspace-stats-collector = dspace_stats_collector.collector:main",
-            "dspace-stats-cronify = dspace_stats_collector.croninstaller:main"
+            "dspace-stats-cronify = dspace_stats_collector.croninstaller:main",
             "dspace-stats-configure = dspace_stats_collector.configure:main"
 
         ]
@@ -60,6 +60,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/lareferencia/dspace-stats-collector',
-    version='0.2.0',
+    version='0.2.1',
     zip_safe=False,
 )
