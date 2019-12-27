@@ -28,6 +28,10 @@ bash $MINICONDA_FILE -b -f -p $INSTALL_PATH
 
 cd $INSTALL_PATH
 
+wget https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/requirements.txt
+echo "Installing dspace-stats-collector package dependencies"
+$INSTALL_PATH/bin/pip install -r requirements.txt
+
 echo "Installing dspace-stats-collector package"
 $INSTALL_PATH/bin/pip install dspace-stats-collector
 
