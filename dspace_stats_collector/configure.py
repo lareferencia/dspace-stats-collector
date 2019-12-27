@@ -10,7 +10,7 @@ import argparse
 import time
 import pkg_resources
 import shutil
-
+import urllib.request
 
 from string import Template
 
@@ -82,10 +82,15 @@ def main():
     config_file.close()
 
     print("Installing counter robots file in %s " % (args.config_dir)) 
-    data_path = pkg_resources.resource_filename('dspace_stats_collector', 'config/')
-    ConfigurationContext.counterRobotsFileName
-    shutil.copy( data_path + ConfigurationContext.counterRobotsFileName, args.config_dir + '/' + ConfigurationContext.counterRobotsFileName )
 
+    try:
+        with urllib.request.urlopen('https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/config/COUNTER_Robots_list.json') as response:
+            filedata = response.read()
+            with open(args.config_dir + '/' + ConfigurationContext.counterRobotsFileName, 'wb') as f:
+                f.write(filedata)
+    except Exception as e:
+        print("Error loading and installing counter robots json file. {}".format(e))   
+    
 
 
 def parse_args():
