@@ -28,7 +28,11 @@ bash $MINICONDA_FILE -b -f -p $INSTALL_PATH
 
 cd $INSTALL_PATH
 
-$INSTALL_PATH/bin/pip install dspace-stats-collector
+echo "Installing config files"
+$INSTALL_PATH/bin/dspace-stats-configure
+
+echo "Installing cron script in user crontab"
+$INSTALL_PATH/bin/dspace-stats-cronify
 
 
 
