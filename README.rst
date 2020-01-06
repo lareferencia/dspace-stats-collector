@@ -18,8 +18,6 @@ Dspace usage stats collector
         :alt: License
 
 
-
-
 A python agent for sending DSpace usage statistics events to Matomo and ELK Stack. 
 
 
@@ -44,7 +42,7 @@ Installation steps:
 1. Check if wget and cron are installed in the system. 
 2. Download installation script from: https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh
 3. Execute installation script from a plain user (ie: dspace) 
-4. Configure matomo site parameters provided in CURRENT_USER_HOME/dspace-stasts-collector/config/default.properties
+4. Configure matomo site parameters provided in CURRENT_USER_HOME/dspace-stasts-collector/config/default.properties 
 5. Execute CURRENT_USER_HOME/dspace-stasts-collector/bin/dspace-stats-collector -v  (will collect and send events for the first time) 
 6. Check/ajust the user crontab (the instalation scripts adds an entry automatically)   
 
