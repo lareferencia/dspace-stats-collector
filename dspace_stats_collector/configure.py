@@ -34,6 +34,7 @@ matomo.batchSize = 50
 
 dspace.dir = $dspace_dir
 dspace.majorVersion = $dspace_major_version
+solr.server = http://localhost/solr`
 """)
 
 def main():
