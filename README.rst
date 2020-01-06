@@ -33,7 +33,7 @@ This is the recommended installation method, the instalation script :
 
 * Downloads and install Miniconda (x86 or x64) a free minimal installer for conda/python (https://docs.conda.io/en/latest/miniconda.html) in CURRENT_USER_HOME/dspace-stasts-collector directory.
 * Installs dspace-stats-collector requeriments and packages in the miniconda python enviroment
-* Creates a default configuration file in CURRENT_USER_HOME/dspace-stasts-collector/config
+* Creates a default configuration file in CURRENT_USER_HOME/dspace-stats-collector/config
 * Downloads lastest COUNTER Robots file  
 * Installs dspace-stats-collector script in the user crontab 
 
