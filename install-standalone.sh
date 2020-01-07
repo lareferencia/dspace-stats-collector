@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 
 INSTALL_PATH=$HOME/dspace-stats-collector
