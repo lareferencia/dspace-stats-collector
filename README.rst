@@ -18,8 +18,6 @@ Dspace usage stats collector
         :alt: License
 
 
-
-
 A python agent for sending DSpace usage statistics events to Matomo and ELK Stack. 
 
 
