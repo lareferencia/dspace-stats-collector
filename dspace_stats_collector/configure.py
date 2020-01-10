@@ -27,7 +27,8 @@ Configuration tool.
 CONFIG_TEMPLATE = Template(""" 
 matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
 matomo.idSite = $site_id
-matomo.repositoryId = $repository_id 
+matomo.repositoryId = $repository_id
+matomo.countryISO = XX 
 matomo.token_auth = $matomo_token_auth
 matomo.rec = 1
 matomo.batchSize = 50
@@ -54,7 +55,7 @@ def main():
     repository_id = "UNIQUE REPOSITORY ID (OpenDOAR)"
     matomo_token_auth = "MATOMO TOKEN AUTH"
 
-    dspace_dir = "/home/dspace"
+    dspace_dir = "/dspace"
     dspace_major_version = 6
 
     # instantiate config template with default values
