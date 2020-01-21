@@ -147,7 +147,7 @@ class DSpaceDB:
         return dcTitleId
 
 
-    def queryDownload(self, bitstreamId, owningItem):
+    def queryDownload(self, bitstreamId) #, owningItem):
         if bitstreamId not in self._dfResources.index.values:
             SQL = self._queryDownloadSQL.format(
                     dcTitleId = self._dcTitleId,

@@ -17,19 +17,19 @@ class DSpaceDBFilter:
 
             if event._src['type'] == 0: # Download
                 isDownload = True
-
-                if event._src.has_key('owningItem') and event._src['owningItem'] is not None:
-                    owningItem = event._src['owningItem']
-                    event._db = self._db.queryDownload(resourceId, owningItem)
-                else: 
-                    logger.warning("Event {} Item download ownningItem fiels is missing - dropping event ".format(event._id))
-                    logger.debug("{}".format(event))
-                    continue
+                event._db = self._db.queryDownload(resourceId)
+                # if event._src.has_key('owningItem') and event._src['owningItem'] is not None:
+                #     owningItem = event._src['owningItem']
+                #     event._db = self._db.queryDownload(resourceId, owningItem)
+                # else: 
+                #     logger.warning("Event {} Item download ownningItem fiels is missing - dropping event ".format(event._id))
+                #     logger.debug("{}".format(event))
+                #     continue
 
 
             elif event._src['type'] == 2: # Item
                 isDownload = False
-                owningItem = None
+                #owningItem = None
                 event._db = self._db.queryItem(resourceId)
 
             else:
