@@ -47,7 +47,7 @@ class MatomoFilter:
             params['ua'] = event._src['userAgent']
 
             oaipmhID = "oai:{}:{}".format(self._dspaceHostname, event._db['handle'])
-            params['cvar'] = json.dumps({"1": ["oaipmhID", oaipmhID], "2": ["repositoryID",self._repoProperties['matomo.repositoryId']] })
+            params['cvar'] = json.dumps({"1": ["oaipmhID", oaipmhID], "2": ["repositoryID",self._repoProperties['matomo.repositoryId']], "3": ["countryID",self._repoProperties['matomo.countryISO']] })
 
             if event._db['is_download']:
                 params['download'] = "{dspaceUrl}/bitstream/{handle}/{sequence_id}/{filename}".format(
@@ -79,9 +79,11 @@ class MatomoFilter:
             params['cdt'] = datetime.strftime(utctime, "%Y-%m-%d %H:%M:%S")
             logger.debug('SOLR time {} got converted to UTC: {}'.format(event._src['time'], params['cdt']))
 
-
             event._matomoParams = params
             event._matomoRequest = '?' + urllib.parse.urlencode(params)
+            
+            logger.debug('MATOMO_FILTER:: Event: {}'.format(event))
+
             yield event
 
 
@@ -155,8 +157,8 @@ class MatomoOutput:
             logger.exception('Error while posting events to tracker. URL: {}. Data: {}'.format(url, data_dict))
             raise
 
-        logger.debug('{} events sent to tracker'.format(num_events))
-        logger.debug('Local time for last event tracked: {}'.format(self._lastTimestamp))
+        logger.info('{} events sent to tracker'.format(num_events))
+        logger.info('Local time for last sent event: {}'.format(self._lastTimestamp))
         self._configContext.save_last_tracked_timestamp(self._lastTimestamp)
         self._requestsBuffer = []
         self._lastTimestamp = None
@@ -166,8 +168,12 @@ class MatomoOutput:
         for event in events:
             n += 1
             self._appendToBuffer(event)
+            logger.debug('MATOMO_OUTPUT:: Appending Event n to buffer: {}'.format(n))
+
             if (n % self._bulkTrackingBatchSize) == 0:
+                logger.debug('MATOMO_OUTPUT:: Sending buffered events to Matomo' )
                 self._flushBuffer()
+
         if (n % self._bulkTrackingBatchSize) != 0:
             self._flushBuffer()
         logger.debug('MatomoOutput finished processing {} events'.format(n))

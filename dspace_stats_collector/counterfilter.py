@@ -25,7 +25,7 @@ class COUNTERRobotsFilter:
     def run(self, events):
 
         for event in events:
-            
+        
             is_robot = False
             user_agent = event._src['userAgent']
 
@@ -35,7 +35,9 @@ class COUNTERRobotsFilter:
                 if is_robot:
                     logger.debug('Robot detected {}'.format(user_agent))
                     break
-            
+
+            logger.debug('COUNTER_FILTER:: Agent: {} is_robot:{}'.format(user_agent, is_robot))
+
             # yield event only if not is a robot, else is discarted 
             if not is_robot:
                 yield event

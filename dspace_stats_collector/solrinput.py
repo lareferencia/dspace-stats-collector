@@ -30,17 +30,17 @@ class TimestampCursor(object):
 
         docs_retrieved = 0
         done = False
-        lastTimestamp = None
+        lastTimestamp = initialTimestamp
 
         while not done:
-            if (docs_retrieved == 0) & (initialTimestamp is not None):
-                self.query['q'] = self.baseQuery + (' +time:{"%s" TO *]' % initialTimestamp)
-            elif docs_retrieved > 0:
-                self.query['q'] = self.baseQuery + (' +time:{"%s" TO *]' % lastTimestamp)
+
+            self.query['q'] = self.baseQuery + (' +time:{"%s" TO *]' % lastTimestamp)
 
             if limit is not None:
                 rows = min(rows, limit - docs_retrieved)
             self.query['rows'] = rows
+
+            logger.debug('Fetching {} SOLR docs from time: {}'.format(rows, lastTimestamp))
 
             results = self.solr._select(self.query)
             resp_data = json.loads(results)
@@ -50,10 +50,10 @@ class TimestampCursor(object):
                     docsToGo = min(numFound, limit)
                 else:
                     docsToGo = numFound
-                logger.debug('{} SOLR events to be processed'.format(docsToGo))
+
             docs = resp_data['response']['docs']
             numDocs = len(docs)
-
+ 
             if numDocs > 0:
                 docs_retrieved += numDocs
                 lastTimestamp = docs[-1]['time']
@@ -82,9 +82,15 @@ class SolrStatisticsInput:
             'fl': 'id,ip,owningItem,referrer,time,type,userAgent'
         })
         for docs in cursor.fetch(rows=self._rows, limit=self._limit, initialTimestamp = self._initialTimestamp):
+
+            logger.debug('{} SOLR docs retrieved. Converting docs to events'.format(len(docs)))
+
             for doc in docs:
                 event = Event()
                 event._src = doc
                 if 'userAgent' not in doc.keys():
                     event._src['userAgent'] = ''
+
+                logger.debug('SOLR_INPUT:: Event: {}'.format(event))
+
                 yield event

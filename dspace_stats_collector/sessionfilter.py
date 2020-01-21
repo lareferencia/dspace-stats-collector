@@ -26,4 +26,7 @@ class SimpleHashSessionFilter:
                         'srcString': srcString
                        }
             event._sess = sessDict
+
+            logger.debug('SESSION_FILTER:: Event: {}'.format(event))
+
             yield event
