@@ -168,7 +168,7 @@ class MatomoOutput:
         for event in events:
             n += 1
             self._appendToBuffer(event)
-            logger.debug('MATOMO_OUTPUT:: Appending Event {} to buffer'.format(event._id))
+            logger.debug('MATOMO_OUTPUT:: Appending Event {} to buffer - {} events processed - buffer size: {} '.format(event._id,n,self._bulkTrackingBatchSize) )
 
             if (n % self._bulkTrackingBatchSize) == 0:
                 logger.debug('MATOMO_OUTPUT:: Sending buffered events to Matomo - {} events sent so far'.format(n) )
