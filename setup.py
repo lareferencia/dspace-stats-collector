@@ -61,6 +61,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/lareferencia/dspace-stats-collector',
-    version='0.2.6',
+    version='0.2.7',
     zip_safe=False,
 )

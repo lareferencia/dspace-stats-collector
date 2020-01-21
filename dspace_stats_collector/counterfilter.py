@@ -35,7 +35,7 @@ class COUNTERRobotsFilter:
                 if is_robot:
                     break
 
-            logger.debug('COUNTER_FILTER:: Event: {} Agent: {} is_robot:{}'.formatevent._id, user_agent, is_robot))
+            logger.debug('COUNTER_FILTER:: Event: {} Agent: {} is_robot:{}'.format(event._id, user_agent, is_robot))
 
             # yield event only if not is a robot, else is discarted 
             if not is_robot:
