@@ -82,7 +82,7 @@ class MatomoFilter:
             event._matomoParams = params
             event._matomoRequest = '?' + urllib.parse.urlencode(params)
             
-            logger.debug('MATOMO_FILTER:: Event: {}'.format(event))
+            logger.debug('MATOMO_FILTER:: Event: {}'.format(event._id))
 
             yield event
 
@@ -168,10 +168,10 @@ class MatomoOutput:
         for event in events:
             n += 1
             self._appendToBuffer(event)
-            logger.debug('MATOMO_OUTPUT:: Appending Event n to buffer: {}'.format(n))
+            logger.debug('MATOMO_OUTPUT:: Appending Event {} to buffer'.format(event._id))
 
             if (n % self._bulkTrackingBatchSize) == 0:
-                logger.debug('MATOMO_OUTPUT:: Sending buffered events to Matomo' )
+                logger.debug('MATOMO_OUTPUT:: Sending buffered events to Matomo - {} events sent so far'.format(n) )
                 self._flushBuffer()
 
         if (n % self._bulkTrackingBatchSize) != 0:

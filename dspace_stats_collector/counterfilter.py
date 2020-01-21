@@ -31,12 +31,11 @@ class COUNTERRobotsFilter:
 
             # searh for robots
             for robot in self.counterRobots:
-                is_robot = is_robot or robot['compiled_re'].search(user_agent)
+                is_robot = robot['compiled_re'].search(user_agent) != None
                 if is_robot:
-                    logger.debug('Robot detected {}'.format(user_agent))
                     break
 
-            logger.debug('COUNTER_FILTER:: Agent: {} is_robot:{}'.format(user_agent, is_robot))
+            logger.debug('COUNTER_FILTER:: Event: {} Agent: {} is_robot:{}'.formatevent._id, user_agent, is_robot))
 
             # yield event only if not is a robot, else is discarted 
             if not is_robot:

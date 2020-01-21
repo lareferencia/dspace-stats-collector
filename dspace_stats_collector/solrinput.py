@@ -81,16 +81,21 @@ class SolrStatisticsInput:
             'fq': '+statistics_type:"view" +type:(0 OR 2)',
             'fl': 'id,ip,owningItem,referrer,time,type,userAgent'
         })
+
+        n = 0
         for docs in cursor.fetch(rows=self._rows, limit=self._limit, initialTimestamp = self._initialTimestamp):
 
             logger.debug('{} SOLR docs retrieved. Converting docs to events'.format(len(docs)))
 
             for doc in docs:
                 event = Event()
+                event._id = n
                 event._src = doc
+                n = n + 1 
+
                 if 'userAgent' not in doc.keys():
                     event._src['userAgent'] = ''
 
-                logger.debug('SOLR_INPUT:: Event: {}'.format(event))
+                logger.debug('SOLR_INPUT:: Event: {}'.format(event._id))
 
                 yield event
