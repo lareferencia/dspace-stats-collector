@@ -67,7 +67,7 @@ In this first version of the agent, the following  stages have been implemented 
 The resulting pipeline runs from the main collector script that stores the last successfully sent timestamp as a state for future calls. 
 
 
-.. include:: INSTALLATION.rst
+.. include:: ./INSTALLATION.rst
 
 
 Credits
