@@ -1,5 +1,5 @@
 ============================
-Dspace usage stats collector
+DSpace Usage Stats Collector
 ============================
 
 
