@@ -6,6 +6,8 @@ import logging
 logger = logging.getLogger()
 
 import json
+import traceback
+
 from itertools import tee
 
 
@@ -54,3 +56,4 @@ class EventPipeline:
                 output.run(teed_events)
             except Exception as e: 
                 logger.error( 'A fatal exception ocurred processing events !!!! {}'.format(e) )
+                traceback.print_exc()
