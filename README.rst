@@ -68,6 +68,10 @@ The resulting pipeline runs from the main collector script that stores the last 
 
 
 .. include:: ./INSTALLATION.rst
+Installation
+------------
+
+https://dspace-stats-collector.readthedocs.io/en/latest/installation.html
 
 
 Credits
