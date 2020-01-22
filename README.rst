@@ -68,6 +68,7 @@ The resulting pipeline runs from the main collector script that stores the last 
 
 
 .. include:: ./INSTALLATION.rst
+
 Installation
 ------------
 
