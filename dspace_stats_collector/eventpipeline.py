@@ -53,4 +53,4 @@ class EventPipeline:
             try:
                 output.run(teed_events)
             except Exception as e: 
-                logger.error('A fatal exception ocurred processing events !!!!')
+                logger.error( 'A fatal exception ocurred processing events !!!! {}'.format(e) )

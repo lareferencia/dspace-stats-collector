@@ -47,7 +47,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Dspace usage stats collector'
+project = u'DSpace Usage Stats Collector'
 copyright = u"2019, LA Referencia"
 author = u"LA Referencia"
 
@@ -129,7 +129,7 @@ latex_elements = {
 # [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'dspace_stats_collector.tex',
-     u'Dspace usage statistics collector Documentation',
+     u'DSpace Usage Statistics Collector Documentation',
      u'LA Referencia', 'manual'),
 ]
 
@@ -140,7 +140,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'dspace_stats_collector',
-     u'Dspace usage stats collector Documentation',
+     u'Dspace Usage Stats Collector Documentation',
      [author], 1)
 ]
 
@@ -152,7 +152,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'dspace_stats_collector',
-     u'Dspace usage stats collector Documentation',
+     u'DSpace Usage Stats Collector Documentation',
      author,
      'dspace_stats_collector',
      'One line description of project.',
