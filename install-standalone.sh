@@ -38,8 +38,5 @@ $INSTALL_PATH/bin/pip install dspace-stats-collector
 echo "Installing config files"
 $INSTALL_PATH/bin/dspace-stats-configure
 
-echo "Installing cron script in user crontab"
-$INSTALL_PATH/bin/dspace-stats-cronify
-
 
 
