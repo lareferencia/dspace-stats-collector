@@ -26,9 +26,11 @@ IMPORTANT: The instalation script and the dspace-stats-collector does not requir
 Installation steps:
 -------------------
 
-1. Check if wget and cron are installed in the system. 
+1. Verificar se os programas wget e cron estão instalados no Sistema Operacional. 
 
-2. Download installation script from: https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh
+2. Baixar o script de instalação pelo endereço, https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh , usando o comando wget.
+  
+  # wget https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh
 
 3. Execute installation script from a plain user (ie: dspace) 
 
