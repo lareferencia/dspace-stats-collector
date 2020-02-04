@@ -72,7 +72,7 @@ class ConfigurationContext:
                         self.dspaceProperties['db.url'],
                         self.dspaceProperties['db.username'],
                         self.dspaceProperties['db.password'],
-                        self.dspaceProperties['db.schema'],
+                        self.dspaceProperties.get('db.schema','public'),
                         self.properties['dspace.majorVersion']
                     )
 
