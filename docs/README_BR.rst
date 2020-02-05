@@ -26,13 +26,17 @@ IMPORTANT: The instalation script and the dspace-stats-collector does not requir
 Installation steps:
 -------------------
 
+
+
 1. Verificar se os programas wget e cron estão instalados no Sistema Operacional. 
 
-2. Baixar o script de instalação pelo endereço, https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh , usando o comando wget.
+2. Baixar o script de instalação pelo endereço, https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh , usando o comando wget. Certifique que está utilizando o usuário padrão(Preferencialmente o proprietário do dspace) e localizado na pasta correta.
+
+  # cd /home/NOME_USUARIO/dspace-stats-collector
   
   # wget https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh
 
-3. Execute installation script from a plain user (ie: dspace) 
+3. Execute o script de instalação utilizando o usuário padrão( ) 
 
 4. Configure matomo site parameters provided in CURRENT_USER_HOME/dspace-stats-collector/config/default.properties
 
