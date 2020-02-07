@@ -9,15 +9,15 @@ Instalação para usuarios com permissão independente (Pacote python incluso)
 
 O coletador pode ser executado manualmente ou como uma tarefa agendada usando o sistema de agendamento de tarefas, CRON. Um único script bash de instalação foi desenvolvido para implementar um processo simples de execução. Esse script bash executa as seguintes etapas de instalação e configuração:
 
-* download and install a free minimal Python environment (https://docs.conda.io/en/latest/miniconda.html) in the user home directory
+* Baixar e instalar um ambiente mínimo de Python (https://docs.conda.io/en/latest/miniconda.html) no diretório origem do usuário
 
-* install required Python packages 
+* Instalar os pacostes Python reinstall necessários 
 
-* create the default configuration file 
+* Criar um arquivo de configuração base 
 
-* download the latest COUNTER Robots file
+* Baixar o arquivo COUNTER Robots mais recente
 
-* instruct the user to fill minimal information in the configuration file: the DSpace installation directory, the DSpace major version and the required credentials for sending events to a remote Matomo instance
+* instrua o usuário a preencher informações mínimas no arquivo de configuração: o diretório de instalação do DSpace, the DSpace major version and the required credentials for sending events to a remote Matomo instance
 
 After this simple installation process, the collector is ready to start working by collecting and sending usage data into the pre-configured remote Matomo instance. Also a command to install the collector script in the user CRONTAB is provided. 
 
