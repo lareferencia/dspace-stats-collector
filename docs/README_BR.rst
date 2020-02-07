@@ -1,13 +1,13 @@
 .. highlight:: shell
 
 ============
-Installation
+INSTALAÇÃO
 ============
 
-Installation - standalone user level installing (w/ python bundle)
+Instalação para usuarios com permissão independente (Pacote python incluso)
 -----------------------------------------------------------------
 
-The collector can be run manually or as a scheduled task using the CRON hosting system. A single bash installation script was developed for implementing a straightforward setup process. This bash script executes the following installation/configuration steps:
+O coletador pode ser executado manualmente ou como uma tarefa agendada usando o sistema de agendamento de tarefas, CRON. Um único script bash de instalação foi desenvolvido para implementar um processo simples de execução. Esse script bash executa as seguintes etapas de instalação e configuração:
 
 * download and install a free minimal Python environment (https://docs.conda.io/en/latest/miniconda.html) in the user home directory
 
