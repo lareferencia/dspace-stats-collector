@@ -21,9 +21,9 @@ O coletador pode ser executado manualmente ou como uma tarefa agendada usando o 
 
 Após esse processo simples de instalação, o coletor está pronto para começar a trabalhar coletando e enviando dados de uso para a instância remota do Matomo pré-configurada. Também é fornecido um comando para instalar o script do coletor no usuário CRONTAB.
 
-Importante: O script de instalação e o dspace-stats-collector não requerem privilégios de superusuário e não instale os pacot fora da pasta /home/NOME_DO_USUARIO/dspace-stats-collector. O script do coletor executa consultas com permissão de “somente leitura” no dspace relational db e solr core. Esta ferramenta não grava ou modifica nenhum arquivo dspace, banco de dados ou solr core. É recomendado, mas na obrigatório, executar a instalação plugin utilizando o usuário dono dos arquivos do DSpace.
+Importante: O script de instalação e o dspace-stats-collector não requerem privilégios de superusuário e não instale os pacot fora da pasta /home/USUARIO/dspace-stats-collector. O script do coletor executa consultas com permissão de “somente leitura” no dspace relational db e solr core. Esta ferramenta não grava ou modifica nenhum arquivo dspace, banco de dados ou solr core. É recomendado, mas na obrigatório, executar a instalação plugin utilizando o usuário dono dos arquivos do DSpace.
 
-Installation steps:
+Etapas da Instalação:
 -------------------
 
 
@@ -32,20 +32,30 @@ Installation steps:
 
 2. Baixar o script de instalação pelo endereço, https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh , usando o comando wget. Certifique que está utilizando o usuário padrão(Preferencialmente o proprietário do dspace) e localizado na pasta correta.
 
-  # cd CURRENT_USER_HOME
+  # cd /home/USUARIO/dspace-stats-collector
   
   # wget https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh
 
-3. Execute o script de instalação utilizando o usuário padrão
+3. Execute o script de instalação utilizando o usuário padrão 
 
+  # sh ./install-standalone.sh
 
+4. Configurar as parametros do matomo no arquivo /home/USUARIO/dspace-stats-collector/config/default.properties, seguindo como exemplo a imagem abaixo.
 
-4. Configure matomo site parameters provided in CURRENT_USER_HOME/dspace-stats-collector/config/default.properties
+  # cd /home/USUARIO/dspace-stats-collector/config
+  # vim default.properties
 
-5. Execute CURRENT_USER_HOME/dspace-stasts-collector/bin/dspace-stats-collector -v -f YYYY-MM-DD  (will collect and send events for the first time from YYYY-MM-DD) 
+5. (Primeira execução)Execute o comando /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f AAAA-MM-DD  (os registros enviados serão a partir da data escolhida, no formato AAAA-MM-DD) 
 
-6. Check if the collector is sending data to matomo instance ( do not execute the next step without this check )
+  # /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f AAAA-MM-DD
 
-7. Execute CURRENT_USER_HOME/dspace-stasts-collector/bin/dspace-stats-cronify (will install collector in user cron) 
+EXEMPLO(Registros a partir da data 01/01/2010):
+  # /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f 2010-01-01
 
-8. Check/ajust the user crontab (the instalation script adds an entry automatically in the user crontab, the collector runs every 60 min by default)   
+6. Depois de finalizado, check se o plugin enviou os dados para a instancia do Matomo. Não execute os próximos passos caso a etapa acima não tenha sido concluida e todas as informações não tenham sido enviadas.
+
+7. Execute o comando para rodar o comando periodicamente /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-cronify 
+
+  # /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-cronify 
+
+8. Verifique e ajuste a execução do crontab(o script de instalação adiciona uma entrada automaticamente no usuário crontab, o script do será executado periodicamente a cada 60 minutos)   
