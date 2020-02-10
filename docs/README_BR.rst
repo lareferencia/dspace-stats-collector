@@ -32,11 +32,11 @@ Installation steps:
 
 2. Baixar o script de instalação pelo endereço, https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh , usando o comando wget. Certifique que está utilizando o usuário padrão(Preferencialmente o proprietário do dspace) e localizado na pasta correta.
 
-  # cd /home/NOME_USUARIO/dspace-stats-collector
+  # cd CURRENT_USER_HOME
   
   # wget https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh
 
-3. Execute o script de instalação utilizando o usuário padrão( ) 
+3. Execute o script de instalação utilizando o usuário padrão
 
 
 
