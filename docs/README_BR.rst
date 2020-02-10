@@ -50,11 +50,11 @@ EXEMPLO:
  
   matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
 
-  matomo.idSite = NÃO ALTERAR CAMPO
+  matomo.idSite = ALTERAR CAMPO PARA INFORMAÇÃO ENVIA POR E-MAIL
 
-  matomo.repositoryId = NÃO ALTERAR CAMPO
+  matomo.repositoryId = ALTERAR CAMPO PARA INFORMAÇÃO ENVIA POR E-MAIL
 
-  matomo.token_auth = NÃO ALTERAR CAMPO
+  matomo.token_auth = ALTERAR CAMPO PARA INFORMAÇÃO ENVIA POR E-MAIL
 
   matomo.rec = 1
 
