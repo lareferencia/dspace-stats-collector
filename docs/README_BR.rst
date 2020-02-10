@@ -60,9 +60,9 @@ Etapas da Instalação:
 
   matomo.batchSize = 50
   
-  ![#f03c15] dspace.dir = /dspace
-  - dspace.majorVersion = 6
-  ```
+  dspace.dir = /dspace
+  
+  dspace.majorVersion = 6
 
 
 5. (Primeira execução)Execute o comando /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f AAAA-MM-DD  (os registros enviados serão a partir da data escolhida, no formato AAAA-MM-DD) 
