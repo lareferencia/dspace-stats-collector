@@ -42,7 +42,11 @@ Etapas da Instalação:
 
 4. Configurar as parametros do matomo no arquivo /home/USUARIO/dspace-stats-collector/config/default.properties, seguindo como exemplo a imagem abaixo. No campo dspace.dir preencher com a localização do diretório do DSpace e no campo dspace.majorVersion preencher com a versão do DSpace. 
 
-  EXEMPLO:
+  # cd /home/USUARIO/dspace-stats-collector/config
+  
+  # vim default.properties
+
+ EXEMPLO:
  
   matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
 
@@ -55,18 +59,11 @@ Etapas da Instalação:
   matomo.rec = 1
 
   matomo.batchSize = 50
-
-
-  ```diff
-  - dspace.dir = /dspace
+  
+  ![#f03c15] dspace.dir = /dspace
   - dspace.majorVersion = 6
   ```
 
-  
-
-  # cd /home/USUARIO/dspace-stats-collector/config
-  
-  # vim default.properties
 
 5. (Primeira execução)Execute o comando /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f AAAA-MM-DD  (os registros enviados serão a partir da data escolhida, no formato AAAA-MM-DD) 
 
