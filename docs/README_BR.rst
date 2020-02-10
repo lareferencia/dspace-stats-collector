@@ -44,17 +44,23 @@ Etapas da Instalação:
 
   EXEMPLO:
  
-matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
-matomo.idSite = 
-matomo.repositoryId = 
-matomo.token_auth = 
-matomo.rec = 1
-matomo.batchSize = 50
+  matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
 
-```diff
-- dspace.dir = /dspace
-- dspace.majorVersion = 6
-```
+  matomo.idSite = 
+
+  matomo.repositoryId = 
+
+  matomo.token_auth = 
+
+  matomo.rec = 1
+
+  matomo.batchSize = 50
+
+
+  ```diff
+  - dspace.dir = /dspace
+  - dspace.majorVersion = 6
+  ```
 
   
 
