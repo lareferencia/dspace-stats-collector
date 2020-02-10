@@ -49,7 +49,8 @@ Etapas da Instalação:
 
   # /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f AAAA-MM-DD
 
-EXEMPLO(Registros a partir da data 01/01/2010):
+  EXEMPLO(Registros a partir da data 01/01/2010):
+  
   # /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f 2010-01-01
 
 6. Depois de finalizado, check se o plugin enviou os dados para a instancia do Matomo. Não execute os próximos passos caso a etapa acima não tenha sido concluida e todas as informações não tenham sido enviadas.
