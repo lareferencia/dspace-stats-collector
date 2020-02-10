@@ -21,7 +21,7 @@ O coletador pode ser executado manualmente ou como uma tarefa agendada usando o 
 
 Após esse processo simples de instalação, o coletor está pronto para começar a trabalhar coletando e enviando dados de uso para a instância remota do Matomo pré-configurada. Também é fornecido um comando para instalar o script do coletor no usuário CRONTAB.
 
-IMPORTANT: The instalation script and the dspace-stats-collector does not require superuser privileges and don´t install any software outside the CURRENT_USER_HOME/dspace-stats-collector. The collector script execute read only queries over dspace relational db and solr core. This tool doesn´t write or modify any dspace file, dspace db or solr core. It´s recommended, but not mandatory, execute the instalation script from de dspace user. 
+Importante: O script de instalação e o dspace-stats-collector não requerem privilégios de superusuário e não instale os pacot fora da pasta /home/NOME_DO_USUARIO/dspace-stats-collector. O script do coletor executa consultas com permissão de “somente leitura” no dspace relational db e solr core. Esta ferramenta não grava ou modifica nenhum arquivo dspace, banco de dados ou solr core. É recomendado, mas na obrigatório, executar a instalação plugin utilizando o usuário dono dos arquivos do DSpace.
 
 Installation steps:
 -------------------
@@ -37,6 +37,8 @@ Installation steps:
   # wget https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh
 
 3. Execute o script de instalação utilizando o usuário padrão( ) 
+
+
 
 4. Configure matomo site parameters provided in CURRENT_USER_HOME/dspace-stats-collector/config/default.properties
 
