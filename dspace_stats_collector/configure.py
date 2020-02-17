@@ -24,18 +24,33 @@ DESCRIPTION = """
 Configuration tool.
 """
 
-CONFIG_TEMPLATE = Template(""" 
-matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
+CONFIG_TEMPLATE = Template("""
+
+# ask your node admin for this information
 matomo.idSite = $site_id
-matomo.repositoryId = $repository_id
-matomo.countryISO = XX 
 matomo.token_auth = $matomo_token_auth
+
+# repository id (ie: OpenDOAR ID)
+matomo.repositoryId = $repository_id
+
+# country iso 2 chars (Example: CL)
+matomo.countryISO = XX 
+
+# dspace instalation dir
+dspace.dir = $dspace_dir
+
+# dspace version 1 char only (4,5,6)
+dspace.majorVersion = $dspace_major_version
+
+# default solr server url 
+solr.server = http://localhost:8080/solr
+
+# please do not modify this values
 matomo.rec = 1
 matomo.batchSize = 50
+matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
 
-dspace.dir = $dspace_dir
-dspace.majorVersion = $dspace_major_version
-solr.server = http://localhost/solr`
+
 """)
 
 def main():
