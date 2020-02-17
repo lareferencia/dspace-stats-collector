@@ -48,7 +48,7 @@ class DSpaceDB:
 
         self._dfResources = pd.DataFrame(columns=['id', 'record_title', 'handle', 'is_download', 'owning_item', 'sequence_id', 'filename']).set_index('id')
 
-        if dSpaceMajorVersion == '5':
+        if dSpaceMajorVersion == '5' or dSpaceMajorVersion == '4':
             self._queryDownloadSQL = """
             SELECT mv.resource_id AS id,
                    mv2.text_value AS record_title,
@@ -122,7 +122,7 @@ class DSpaceDB:
                   AND mv.dspace_object_id::text = '{itemId}';
             """
         else:
-            logger.error('Only implemented values for dspace.majorVersion are 5 and 6. Received {}'.format(dSpaceMajorVersion))
+            logger.error('Only implemented values for dspace.majorVersion are 4, 5 and 6. Received {}'.format(dSpaceMajorVersion))
             raise NotImplementedError
 
         self._dcTitleId = self.getDcTitleId()
