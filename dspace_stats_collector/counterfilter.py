@@ -30,18 +30,18 @@ class COUNTERRobotsFilter:
             # temporaly accept all events from DSpace 4, because there is no userAgent data
             if self.configContext.dspaceMajorVersion == '4': 
                 yield event 
-        
-            is_robot = False
-            user_agent = event._src['userAgent']
+            else:
+                is_robot = False
+                user_agent = event._src['userAgent']
 
-            # searh for robots
-            for robot in self.counterRobots:
-                is_robot = robot['compiled_re'].search(user_agent) != None
-                if is_robot:
-                    break
+                # searh for robots
+                for robot in self.counterRobots:
+                    is_robot = robot['compiled_re'].search(user_agent) != None
+                    if is_robot:
+                        break
 
-            logger.debug('COUNTER_FILTER:: Event: {} Agent: {} is_robot:{}'.format(event._id, user_agent, is_robot))
+                logger.debug('COUNTER_FILTER:: Event: {} Agent: {} is_robot:{}'.format(event._id, user_agent, is_robot))
 
-            # yield event only if not is a robot, else is discarted 
-            if not is_robot:
-                yield event
+                # yield event only if not is a robot, else is discarted 
+                if not is_robot:
+                    yield event
