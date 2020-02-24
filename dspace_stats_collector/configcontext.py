@@ -68,6 +68,8 @@ class ConfigurationContext:
         self.solrQueryRows= SOLR_QUERY_ROWS_SIZE
         self.solrQueryLimit= commandLineArgs.limit
         
+        self.dspaceMajorVersion = self.properties['dspace.majorVersion']
+
         self.db = DSpaceDB(
                         self.dspaceProperties['db.url'],
                         self.dspaceProperties['db.username'],

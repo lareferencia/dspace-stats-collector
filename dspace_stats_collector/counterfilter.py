@@ -11,6 +11,7 @@ import re
 class COUNTERRobotsFilter:
 
     def __init__(self, configContext):
+        self.configContext = configContext
         self.counterRobots = self._readCOUNTERRobots(configContext.counterRobotsFilename)
 
     def _readCOUNTERRobots(self, filename):
@@ -25,6 +26,10 @@ class COUNTERRobotsFilter:
     def run(self, events):
 
         for event in events:
+
+            # temporaly accept all events from DSpace 4, because there is no userAgent data
+            if self.configContext.dspaceMajorVersion == '4': 
+                yield event 
         
             is_robot = False
             user_agent = event._src['userAgent']
