@@ -88,26 +88,27 @@ class DSpaceDB:
             """
         elif dSpaceMajorVersion == '4':
             self._queryDownloadSQL = """
-            SELECT id, record_title, handle, is_download, owning_item, sequence_id, filename FROM
-                (SELECT mv.item_id AS id,
-                mv.text_value AS record_title,
-                h.handle AS handle,
-                true AS is_download,
-                'owning_item' AS owning_item
-                FROM metadatavalue AS mv
-                RIGHT JOIN handle AS h ON mv.item_id = h.resource_id
-                WHERE mv.metadata_field_id = {dcTitleId} AND h.resource_type_id = 2) AS A
-                JOIN
-                (SELECT b.sequence_id,
-                b.name AS filename,
-                i.item_id AS item_id
-                FROM bitstream AS b,
-                bundle2bitstream AS bb,
-                item2bundle AS i
-                WHERE bb.bitstream_id = b.bitstream_id
-                AND i.bundle_id = bb.bundle_id
-                AND b.bitstream_id = {bitstreamId}) AS C
-                ON A.id = C.item_id;
+           SELECT C.bitstream_id as id, record_title, handle, is_download, owning_item, sequence_id, filename FROM
+            (SELECT mv.item_id AS id,
+            mv.text_value AS record_title,
+            h.handle AS handle,
+            true AS is_download,
+            'owning_item' AS owning_item
+            FROM metadatavalue AS mv
+            RIGHT JOIN handle AS h ON mv.item_id = h.resource_id
+            WHERE mv.metadata_field_id = 64 AND h.resource_type_id = 2) AS A
+            JOIN
+            (SELECT b.sequence_id,
+            b.name AS filename,
+            b.bitstream_id,
+            i.item_id AS item_id
+            FROM bitstream AS b,
+            bundle2bitstream AS bb,
+            item2bundle AS i
+            WHERE bb.bitstream_id = b.bitstream_id
+            AND i.bundle_id = bb.bundle_id
+            AND b.bitstream_id = 3) AS C
+            ON A.id = C.item_id;
             """
             self._queryItemSQL = """
                 SELECT mv.item_id AS id,
