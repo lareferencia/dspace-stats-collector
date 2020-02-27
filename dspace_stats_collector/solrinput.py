@@ -94,7 +94,7 @@ class SolrStatisticsInput:
                 n = n + 1 
 
                 if 'userAgent' not in doc.keys():
-                    event._src['userAgent'] = ''
+                    event._src['userAgent'] = None
 
                 logger.debug('SOLR_INPUT:: Event: {}'.format(event._id))
 
