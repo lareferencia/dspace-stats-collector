@@ -38,7 +38,7 @@ Installation steps:
 
 4. Execute CURRENT_USER_HOME/dspace-stasts-collector/bin/dspace-stats-collector -v -f YYYY-MM-DD  (will collect and send events for the first time from YYYY-MM-DD) 
 
-5. Check if the collector is sending data to matomo instance ( do not execute the next step without this check )
+5. Check if the collector is sending data to matomo instance by asking to your national node manager ( do not execute the next step without this check )
 
 6. Execute CURRENT_USER_HOME/dspace-stasts-collector/bin/dspace-stats-cronify (will install collector in user cron) 
 
