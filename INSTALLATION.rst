@@ -30,7 +30,9 @@ Installation steps:
 
 2. Execute installation script from a plain user (ie: dspace) directly from github: 
 
-`wget -O - https://git.io/JvzBR | bash`
+
+    wget -O - https://git.io/JvzBR | bash
+
 
 3. Configure matomo site parameters provided in CURRENT_USER_HOME/dspace-stats-collector/config/default.properties
 
@@ -48,5 +50,5 @@ Update steps
 
 1. Logged as the same user used in installation process run:
 
-`wget -O - https://git.io/Jvz4q | bash`
+    wget -O - https://git.io/Jvz4q | bash
 
