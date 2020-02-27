@@ -28,19 +28,19 @@ Installation steps:
 
 1. Check if wget and cron are installed in the system. 
 
-2. Download installation script from: https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh
+2. Execute installation script from a plain user (ie: dspace) directly from github: 
 
-3. Execute installation script from a plain user (ie: dspace) 
+```bash wget -O - https://git.io/JvzBR | bash ```
 
-4. Configure matomo site parameters provided in CURRENT_USER_HOME/dspace-stats-collector/config/default.properties
+3. Configure matomo site parameters provided in CURRENT_USER_HOME/dspace-stats-collector/config/default.properties
 
-5. Execute CURRENT_USER_HOME/dspace-stasts-collector/bin/dspace-stats-collector -v -f YYYY-MM-DD  (will collect and send events for the first time from YYYY-MM-DD) 
+4. Execute CURRENT_USER_HOME/dspace-stasts-collector/bin/dspace-stats-collector -v -f YYYY-MM-DD  (will collect and send events for the first time from YYYY-MM-DD) 
 
-6. Check if the collector is sending data to matomo instance ( do not execute the next step without this check )
+5. Check if the collector is sending data to matomo instance ( do not execute the next step without this check )
 
-7. Execute CURRENT_USER_HOME/dspace-stasts-collector/bin/dspace-stats-cronify (will install collector in user cron) 
+6. Execute CURRENT_USER_HOME/dspace-stasts-collector/bin/dspace-stats-cronify (will install collector in user cron) 
 
-8. Check/ajust the user crontab (the instalation script adds an entry automatically in the user crontab, the collector runs every 60 min by default)   
+7. Check/ajust the user crontab (the instalation script adds an entry automatically in the user crontab, the collector runs every 60 min by default)   
 
 
 Update steps
@@ -48,5 +48,5 @@ Update steps
 
 1. Logged as the same user used in installation process run:
 
-wget -O - https://git.io/Jvz4q | bash 
+``` wget -O - https://git.io/Jvz4q | bash ```
 
