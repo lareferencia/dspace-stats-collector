@@ -10,6 +10,8 @@ import json
 import requests
 import os
 import sys
+from datetime import date
+
 
 try:
     from .dspacedb import DSpaceDB
@@ -63,7 +65,8 @@ class ConfigurationContext:
             self.solrQueryInitialTimestamp = self.history[LAST_TRACKED_TIMESTAMP_HISTORY_FIELD]
             logger.debug('Loaded initialTimestamp from history: {}'.format(self.solrQueryInitialTimestamp))
         else:
-            self.solrQueryInitialTimestamp = None
+            logger.debug('No initial date provided, using current date.')
+            self.solrQueryInitialTimestamp = date.today().strftime(TIMESTAMP_PATTERN)
 
         self.solrQueryRows= SOLR_QUERY_ROWS_SIZE
         self.solrQueryLimit= commandLineArgs.limit
