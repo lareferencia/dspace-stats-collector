@@ -42,3 +42,11 @@ Installation steps:
 
 8. Check/ajust the user crontab (the instalation script adds an entry automatically in the user crontab, the collector runs every 60 min by default)   
 
+
+Update steps
+-------------
+
+1. Logged as the same user used in installation process run:
+
+`  wget -O - https://git.io/Jvz4q | bash `
+
