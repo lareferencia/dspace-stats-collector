@@ -48,5 +48,5 @@ Update steps
 
 1. Logged as the same user used in installation process run:
 
-`  wget -O - https://git.io/Jvz4q | bash `
+wget -O - https://git.io/Jvz4q | bash 
 
