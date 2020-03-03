@@ -71,7 +71,7 @@ def parse_args():
                         "--run_every_m_minutes",
                         help="run job every m minutes",
                         type=int,
-                        default=60)
+                        default=59)
 
     parser.add_argument("-c",
                         "--command_path",
