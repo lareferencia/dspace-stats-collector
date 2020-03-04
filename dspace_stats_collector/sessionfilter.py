@@ -32,7 +32,7 @@ class SimpleHashSessionFilter:
             event._sess = sessDict
 
             # Anonymize IP
-            if self._anonymize_ip_mask != FULL_IP_MASK:     
+            if self._anonymize_ip_mask != self.FULL_IP_MASK:     
                 event._src['ip'] = anonymize_ip(event._src['ip'], self._anonymize_ip_mask)    
 
             logger.debug('SESSION_FILTER:: Event: {} Session string: {}'.format(event._id, srcString))
