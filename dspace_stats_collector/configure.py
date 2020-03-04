@@ -51,9 +51,9 @@ matomo.batchSize = 50
 matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
 
 # anonymize ip
-# 255.255.255.255 -> leaves original ip (default)
-# 255.255.255.0   -> 1 byte anonymize
-# 255.255.0.0     -> 2 byte anonimize
+# 255.255.255.255 -> original ip (default)
+# 255.255.255.0   -> 1 byte anonymize Ex. 192.168.100.12 --> 192.168.100.0 
+# 255.255.0.0     -> 2 byte anonimize Ex. 192.168.100.12 --> 192.168.0.0
 anonymize.ip_mask = 255.255.255.255
 """)
 
