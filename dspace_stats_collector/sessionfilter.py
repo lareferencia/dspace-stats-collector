@@ -29,8 +29,9 @@ class SimpleHashSessionFilter:
                        }
             event._sess = sessDict
 
-            # Anonymize IP     
-            event._src['ip'] = anonymize_ip(event._src['ip'], self._anonymize_ip_mask)    
+            # Anonymize IP
+            if self._anonymize_ip_mask != '255.255.255.255':     
+                event._src['ip'] = anonymize_ip(event._src['ip'], self._anonymize_ip_mask)    
 
             logger.debug('SESSION_FILTER:: Event: {} Session string: {}'.format(event._id, srcString))
 
