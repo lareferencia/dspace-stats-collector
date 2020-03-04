@@ -12,7 +12,6 @@ import os
 import sys
 from datetime import date
 
-
 try:
     from .dspacedb import DSpaceDB
 except Exception: #ImportError
@@ -29,6 +28,7 @@ TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
 SOLR_QUERY_ROWS_SIZE = 10
 COUNTER_ROBOTS_FILE = 'COUNTER_Robots_list.json'
 LAST_TRACKED_TIMESTAMP_HISTORY_FIELD = 'lastTrackedEventTimestamp'
+DEFAULT_ANONYMIZE_IP_MASK = '255.255.255.255'
 
 class ConfigurationContext:
 
@@ -73,17 +73,20 @@ class ConfigurationContext:
         
         self.dspaceMajorVersion = self.properties['dspace.majorVersion']
 
+        self.anonymize_ip_mask = self.properties.get('anonymize.ip_mask', DEFAULT_ANONYMIZE_IP_MASK)
+
         self.db = DSpaceDB(
                         self.dspaceProperties['db.url'],
                         self.dspaceProperties['db.username'],
                         self.dspaceProperties['db.password'],
                         self.dspaceProperties.get('db.schema','public'),
-                        self.properties['dspace.majorVersion']
+                        self.dspaceMajorVersion
                     )
 
     @staticmethod
     def getPropertiesFieldPath(config_dir, repoName):
         return "%s/%s.properties" % (config_dir, repoName)
+
 
     def _read_properties(self):
         javaprops = JavaProperties()

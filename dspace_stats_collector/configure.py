@@ -50,7 +50,11 @@ matomo.rec = 1
 matomo.batchSize = 50
 matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
 
-
+# anonymize ip
+# 255.255.255.255 -> leaves original ip (default)
+# 255.255.255.0   -> 1 byte anonymize
+# 255.255.0.0     -> 2 byte anonimize
+anonymize.ip_mask = 255.255.255.255
 """)
 
 def main():
