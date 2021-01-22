@@ -87,7 +87,16 @@ class ConfigurationContext:
     def getPropertiesFieldPath(config_dir, repoName):
         return "%s/%s.properties" % (config_dir, repoName)
 
+    ############################################### public methods   ###########################################
+    def getMatomoOutputSize(self):
+        return int(self.properties['matomo.batchSize'])
 
+    def getMatomoTokenAuth(self):
+        return int(self.properties['matomo.token_auth'])
+
+
+
+    ################################################ private methods ##########################################
     def _read_properties(self):
         javaprops = JavaProperties()
 

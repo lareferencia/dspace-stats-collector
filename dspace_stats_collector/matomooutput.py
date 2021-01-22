@@ -12,7 +12,19 @@ from datetime import datetime
 from pytz import timezone
 import requests
 
-BULK_TRACKING_BATCH_SIZE_DEFAULT = 50
+# define Python user-defined exceptions
+class MatomoException(Exception):
+    """Base class for other exceptions"""
+    pass
+
+class MatomoOfflineException(MatomoException):
+    """Base class for other exceptions"""
+    pass
+
+class MatomoInternalServerException(MatomoException):
+    """Base class for other exceptions"""
+    pass
+
 
 class MatomoFilter:
 
@@ -87,93 +99,115 @@ class MatomoFilter:
             yield event
 
 
-class MatomoBulkOutput:
-#TODO: This matomo outputs will be used in combination with a general buffered output to be developed
+BULK_TRACKING_BATCH_SIZE_DEFAULT = 50
+
+class MatomoBufferedSender:
+
     def __init__(self, configContext):
+    
         self._configContext = configContext
-        self._configContextProperties = configContext.properties
-                 
-    def run(self, events):
-        data_dict = dict(
-            requests=[event._matomoRequest for event in events],
-            token_auth=self._configContextProperties['matomo.token_auth']
-        )
-        num_events = len(data_dict['requests'])
-        url = self._configContextProperties['matomo.trackerUrl']
+        self._buffer = [] # init buffer 
+        self._totalSent = 0
+        
+        try:
+            self._bufferSize = configContext.getMatomoOutputSize()
+            assert(self._maxBufferSize > 0)
+        except:
+            self._bufferSize = BULK_TRACKING_BATCH_SIZE_DEFAULT
+
+    def getTotalSent(self):
+        return self._totalSent
+
+    def send(self, event):
+        self._buffer.append(event)
+        self._flushBuffer()
+      
+    def isBufferFull(self):
+        return len(self._buffer) == self._bufferSize
+
+    def _sendEvents(self, url, events):
+
+        lastEventTimestamp = events[-1]._src['time'] 
 
         try:
-            http_response = requests.post(url, data = json.dumps(data_dict))
+       
+            http_response = requests.post(url, data = json.dumps( dict( requests = [ e._matomoRequest for e in events ], token_auth = self._configContext.getMatomoTokenAuth()) ))
             http_response.raise_for_status()
             json_response = json.loads(http_response.text)
+            
             if json_response['status'] != "success" or json_response['invalid'] != 0:
-                raise ValueError(http_response.text)
-        except requests.exceptions.HTTPError as err:
-            logger.exception('HTTP error occurred: {}'.format(err))
-            raise
-        except:
-            logger.exception('Error while posting events to tracker. URL: {}. Data: {}'.format(url, data_dict))
-            raise
+                raise MatomoInternalServerException(http_response.text, json_response)
+        
+        except requests.exceptions.HTTPError as e:
+            raise MatomoInternalServerException(str(e))
 
-        logger.debug('{} events sent to matomo tracker'.format(num_events))
-        logger.debug('MatomoOutput finished processing {} events'.format(num_events))
+        except requests.exceptions.ConnectionError as e:
+            raise MatomoOfflineException(str(e))
+            
+        except requests.exceptions.RequestException as e:
+            raise MatomoOfflineException(str(e))
+
+        return lastEventTimestamp
+
+
+
+    def _flushBuffer(self):
+
+        lastEventventTimestamp = None
+
+        if ( self.isBufferFull() ):
+
+            try: 
+            # try to send all buffered events        
+                lastEventTimestamp = self._sendEvents(self._buffer)
+                self._totalSent += len(self._buffer)
+
+            except MatomoOfflineException as e:
+            # if is offline will break the execution
+                raise
+
+            except MatomoInternalServerException as e:
+
+                # if some there is some internal problem, the will try to send each event 
+
+                logger.error('Matomo internal error detected processing events in bulk. Retrying in one event per request mode: Error was: {}'.format( str(e) ) )            
+
+                for event in self._buffer:
+
+                    try:
+                        lastEventTimestamp = e._src['time'] # in this mode, the event timestamp is always assigned as the last timestamp
+                        self._sendEvents([event]) # send one event
+                        self._totalSent += 1
+
+                    except MatomoOfflineException as e: # if server is down break
+                        raise 
+                    
+                    except MatomoInternalServerException as e: # if there is some internal error will discard this event and log the result
+                        logger.error('Matomo internal error occurred: {} with event. This event will be discarded.\n {}'.format( str(e), event ) )            
+
+
+
+            if lastEventTimestamp != None:
+                self._configContext.save_last_tracked_timestamp(lastEventTimestamp)
+
+            self._requestsBuffer = []
+
+
 
 
 class MatomoOutput:
 
     def __init__(self, configContext):
+
         self._configContext = configContext
-        self._configContextProperties = configContext.properties
-        self._requestsBuffer = []
-        self._lastTimestamp = None
-        try:
-            self._bulkTrackingBatchSize = int(self._configContextProperties['matomo.batchSize'])
-            assert(self._bulkTrackingBatchSize > 0)
-        except:
-            self._bulkTrackingBatchSize = BULK_TRACKING_BATCH_SIZE_DEFAULT
-
-    def _appendToBuffer(self, event):
-        self._requestsBuffer.append(event._matomoRequest)
-        self._lastTimestamp = event._src['time']
-
-    def _flushBuffer(self):
-        data_dict = dict(
-            requests=self._requestsBuffer,
-            token_auth=self._configContextProperties['matomo.token_auth']
-        )
-        num_events = len(self._requestsBuffer)
-        url = self._configContextProperties['matomo.trackerUrl']
-
-        # print(json.dumps(data_dict, indent=4, sort_keys=True))
-        try:
-            http_response = requests.post(url, data = json.dumps(data_dict))
-            http_response.raise_for_status()
-            json_response = json.loads(http_response.text)
-            if json_response['status'] != "success" or json_response['invalid'] != 0:
-                raise ValueError(http_response.text)
-        except requests.exceptions.HTTPError as err:
-            logger.exception('HTTP error occurred: {}'.format(err))
-            raise
-        except:
-            logger.exception('Error while posting events to tracker. URL: {}. Data: {}'.format(url, data_dict))
-            raise
-
-        logger.info('{} events sent to tracker'.format(num_events))
-        logger.info('Local time for last sent event: {}'.format(self._lastTimestamp))
-        self._configContext.save_last_tracked_timestamp(self._lastTimestamp)
-        self._requestsBuffer = []
-        self._lastTimestamp = None
+        self._sender = MatomoBufferedSender(configContext)
 
     def run(self, events):
-        n = 0
+        
+        processed = 0
+
         for event in events:
-            n += 1
-            self._appendToBuffer(event)
-            logger.debug('MATOMO_OUTPUT:: Appending Event {} to buffer - {} events processed - buffer size: {} '.format(event._id,n,self._bulkTrackingBatchSize) )
-
-            if (n % self._bulkTrackingBatchSize) == 0:
-                logger.debug('MATOMO_OUTPUT:: Sending buffered events to Matomo - {} events sent so far'.format(n) )
-                self._flushBuffer()
-
-        if (n % self._bulkTrackingBatchSize) != 0:
-            self._flushBuffer()
-        logger.debug('MatomoOutput finished processing {} events'.format(n))
+            processed += 1
+            self._sender.send(event)
+        
+        logger.info('MatomoOutput finished processing {} events, sent {} succesfully'.format(processed, _sender.getTotalSent()))

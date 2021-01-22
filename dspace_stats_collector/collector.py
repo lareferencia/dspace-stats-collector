@@ -37,7 +37,7 @@ except Exception: #ImportError
     from sessionfilter import SimpleHashSessionFilter
 
 try:
-    from .matomooutput import MatomoFilter, MatomoOutput, MatomoBulkOutput
+    from .matomooutput import MatomoFilter, MatomoOutput, MatomoOfflineException
 except Exception: #ImportError
    from matomooutput import MatomoFilter, MatomoOutput, MatomoBulkOutput
 
@@ -73,7 +73,7 @@ def main():
     if args.verbose:
         loglevel = logging.DEBUG
     else:
-        loglevel = logging.WARNING
+        loglevel = logging.INFO
 
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     logger.debug("Verbose: %s" % args.verbose)
@@ -87,13 +87,21 @@ def main():
     #for repoName in args.repositories:
     repoName=args.repository
 
-    logger.debug("START: %s" % repoName)
+    logger.info("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.date_from.strftime("%Y-%m-%d"))) 
     
     configContext = ConfigurationContext(repoName, args)
-
     eventPipeline = EventPipelineBuilder().build(configContext)
-    eventPipeline.run()
-    logger.debug("END: %s" % repoName)
+
+    try:    
+        eventPipeline.run()
+
+    except MatomoOfflineException as e:
+        logger.error("Matomo is offline. Events will be processed in the next run. Error was: %s" % e)
+    
+    except Exception as e:
+        logger.error("Unknown exception. Events will be processed in the next run. Error was: %s" % e)
+    
+    logger.info("Repo succesfully processed: %s on: %s " % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S")) )
 
 def parse_args():
 

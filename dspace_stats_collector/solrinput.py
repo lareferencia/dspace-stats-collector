@@ -13,13 +13,13 @@ try:
 except Exception: #ImportError
     from eventpipeline import Event
 
-class TimestampCursor(object):
-    """ Implements the concept of cursor in relational databases """
-    def __init__(self, solr, query, timeout=100):
+class SolrTimestampCursor(object):
+    
+    """ Implements the concept of timestamped cursor """
+    def __init__(self, solr, query):
         """ Cursor initialization """
         self.solr = solr
         self.query = query
-        self.timeout = timeout
         self.baseQuery = self.query['q']
 
     def fetch(self, rows=100, limit=None, initialTimestamp=None):
@@ -73,7 +73,7 @@ class SolrStatisticsInput:
 
     def run(self):
         solr = pysolr.Solr(self._solrServerURL, timeout=100)
-        cursor = TimestampCursor(solr, {
+        cursor = SolrTimestampCursor(solr, {
             'q': '*',
             'sort': 'time asc',
             'start': 0,
