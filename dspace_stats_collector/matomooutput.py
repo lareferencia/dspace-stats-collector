@@ -108,6 +108,7 @@ class MatomoBufferedSender:
         self._configContext = configContext
         self._buffer = [] # init buffer 
         self._totalSent = 0
+        self._url = configContext.getMatomoUrl()
         
         try:
             self._bufferSize = configContext.getMatomoOutputSize()
@@ -150,16 +151,18 @@ class MatomoBufferedSender:
         return lastEventTimestamp
 
 
+    def flush(self):
+        self._flushBuffer(True)
 
-    def _flushBuffer(self):
+    def _flushBuffer(self, force=False):
 
         lastEventventTimestamp = None
 
-        if ( self.isBufferFull() ):
+        if ( self.isBufferFull() or force):
 
             try: 
             # try to send all buffered events        
-                lastEventTimestamp = self._sendEvents(self._buffer)
+                lastEventTimestamp = self._sendEvents(self._url, self._buffer)
                 self._totalSent += len(self._buffer)
 
             except MatomoOfflineException as e:
@@ -176,7 +179,7 @@ class MatomoBufferedSender:
 
                     try:
                         lastEventTimestamp = e._src['time'] # in this mode, the event timestamp is always assigned as the last timestamp
-                        self._sendEvents([event]) # send one event
+                        self._sendEvents(self._url, [event]) # send one event
                         self._totalSent += 1
 
                     except MatomoOfflineException as e: # if server is down break
@@ -210,4 +213,7 @@ class MatomoOutput:
             processed += 1
             self._sender.send(event)
         
-        logger.info('MatomoOutput finished processing {} events, sent {} succesfully'.format(processed, _sender.getTotalSent()))
+        self._sender.flush()
+        logger.info('MatomoOutput finished processing {} events, sent {} succesfully'.format(processed, self._sender.getTotalSent()))
+
+

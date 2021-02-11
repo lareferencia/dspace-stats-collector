@@ -92,9 +92,10 @@ class ConfigurationContext:
         return int(self.properties['matomo.batchSize'])
 
     def getMatomoTokenAuth(self):
-        return int(self.properties['matomo.token_auth'])
+        return self.properties['matomo.token_auth']
 
-
+    def getMatomoUrl(self):
+        return self.properties['matomo.trackerUrl']
 
     ################################################ private methods ##########################################
     def _read_properties(self):

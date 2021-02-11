@@ -44,12 +44,12 @@ class SolrTimestampCursor(object):
 
             results = self.solr._select(self.query)
             resp_data = json.loads(results)
-            if (docs_retrieved == 0):
-                numFound = resp_data['response']['numFound']
-                if limit is not None:
-                    docsToGo = min(numFound, limit)
-                else:
-                    docsToGo = numFound
+            #if (docs_retrieved == 0):
+                #numFound = resp_data['response']['numFound']
+                #if limit is not None:
+                #    docsToGo = min(numFound, limit)
+                #else:
+                #    docsToGo = numFound
 
             docs = resp_data['response']['docs']
             numDocs = len(docs)
