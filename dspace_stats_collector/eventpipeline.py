@@ -46,7 +46,15 @@ class EventPipeline:
 
         for filter in self._filters_stage:
             events = filter.run(events)            
-            
+
+        try:
+            self._outputs_stage[0].run(events)
+        except Exception as e: 
+            logger.error( 'A fatal exception ocurred processing events !!!! {}'.format(e) )
+            traceback.print_exc()
+
+
+        """    
         # create and event iterator for every output (tee return tuple of size n)
         events_iter = tee(events, len(self._outputs_stage)) 
        
@@ -57,3 +65,4 @@ class EventPipeline:
             except Exception as e: 
                 logger.error( 'A fatal exception ocurred processing events !!!! {}'.format(e) )
                 traceback.print_exc()
+        """
