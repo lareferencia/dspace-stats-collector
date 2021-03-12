@@ -19,7 +19,7 @@ class Event:
         None
 
     def __getattr__(self, attribute):
-        return self._data_dict[attribute]
+        return self._data_dict.get(attribute, None)
 
     def __setattr__(self, name, value):
         self._data_dict[name] = value
@@ -45,8 +45,8 @@ class EventPipeline:
         events = self._input_stage.run()
 
         for filter in self._filters_stage:
-            events = filter.run(events)
-
+            events = filter.run(events)            
+            
         # create and event iterator for every output (tee return tuple of size n)
         events_iter = tee(events, len(self._outputs_stage)) 
        

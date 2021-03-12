@@ -28,9 +28,11 @@ class COUNTERRobotsFilter:
         for event in events:
 
             user_agent = event._src.get('userAgent', None)
+            logger.debug('Event timestamp: {}'.format(event._src['time']))
 
             # temporaly accept all events from DSpace 4 and no userAgent data
             if user_agent is None and self.configContext.dspaceMajorVersion == '4': 
+                #event.is_robot = False
                 yield event 
             else:
                 is_robot = False
@@ -44,5 +46,9 @@ class COUNTERRobotsFilter:
                 logger.debug('COUNTER_FILTER:: Event: {} Agent: {} is_robot:{}'.format(event._id, user_agent, is_robot))
 
                 # yield event only if not is a robot, else is discarted 
-                if not is_robot:
-                    yield event
+                #if not is_robot:
+                #    yield event
+                event.is_robot = is_robot
+                yield event
+
+            

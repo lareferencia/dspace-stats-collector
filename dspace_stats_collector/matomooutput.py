@@ -94,7 +94,7 @@ class MatomoFilter:
             event._matomoParams = params
             event._matomoRequest = '?' + urllib.parse.urlencode(params)
             
-            logger.debug('MATOMO_FILTER:: Event: {}'.format(event._id))
+            logger.debug('MATOMO_FILTER:: Event: {} is_robot {}'.format(event._id, event.is_robot))
 
             yield event
 
@@ -120,82 +120,91 @@ class MatomoBufferedSender:
         return self._totalSent
 
     def send(self, event):
+        request_list = [ e._id for e in self._buffer ]
+        print(list(request_list))
         self._buffer.append(event)
-        self._flushBuffer()
+        request_list = [ e._id for e in self._buffer ]
+        print(list(request_list))
+        if self.isBufferFull():
+            self.flush()
       
     def isBufferFull(self):
-        return len(self._buffer) == self._bufferSize
+        return len(self._buffer) >= self._bufferSize
 
-    def _sendEvents(self, url, events):
+    def _sendRequestsToMatomo(self, url, events):
 
         lastEventTimestamp = events[-1]._src['time'] 
 
         try:
-       
-            http_response = requests.post(url, data = json.dumps( dict( requests = [ e._matomoRequest for e in events ], token_auth = self._configContext.getMatomoTokenAuth()) ))
-            http_response.raise_for_status()
-            json_response = json.loads(http_response.text)
+            request_list = [ e._matomoRequest for e in events ]
+            #print(list(request_list))
+            #request_list = [ e._matomoRequest for e in events] 
+            if len(request_list) > 0: #sends only non empty lists
+                http_response = requests.post(url, data = json.dumps( dict( requests = request_list, token_auth = self._configContext.getMatomoTokenAuth()) ))
+                #http_response = requests.post(url, data = json.dumps( dict( requests = [ e._matomoRequest for e in events if not e.is_robot  ], token_auth = self._configContext.getMatomoTokenAuth()) ))
+                http_response.raise_for_status()
+                json_response = json.loads(http_response.text)
             
-            if json_response['status'] != "success" or json_response['invalid'] != 0:
-                raise MatomoInternalServerException(http_response.text, json_response)
+                if json_response['status'] != "success" or json_response['invalid'] != 0:
+                    raise MatomoInternalServerException(http_response.text, json_response)
+            else:
+                logger.debug("There are no events to send")  #Modificación MEMO#
         
         except requests.exceptions.HTTPError as e:
+            print(e)
             raise MatomoInternalServerException(str(e))
 
         except requests.exceptions.ConnectionError as e:
+            print(e)
             raise MatomoOfflineException(str(e))
             
         except requests.exceptions.RequestException as e:
+            print(e)
             raise MatomoOfflineException(str(e))
 
         return lastEventTimestamp
 
 
     def flush(self):
-        self._flushBuffer(True)
 
-    def _flushBuffer(self, force=False):
-
-        lastEventventTimestamp = None
-
-        if ( self.isBufferFull() or force):
-
-            try: 
+        lastEventTimestamp = None
+      
+        try: 
             # try to send all buffered events        
-                lastEventTimestamp = self._sendEvents(self._url, self._buffer)
-                self._totalSent += len(self._buffer)
+            lastEventTimestamp = self._sendRequestsToMatomo(self._url, self._buffer)
+            self._totalSent += len(self._buffer)
 
-            except MatomoOfflineException as e:
+        except MatomoOfflineException as e:
             # if is offline will break the execution
-                raise
+            raise
 
-            except MatomoInternalServerException as e:
+        except MatomoInternalServerException as e:
 
-                # if some there is some internal problem, the will try to send each event 
+            # if some there is some internal problem, the will try to send each event 
 
-                logger.error('Matomo internal error detected processing events in bulk. Retrying in one event per request mode: Error was: {}'.format( str(e) ) )            
+            logger.error('Matomo internal error detected processing events in bulk. Retrying in one event per request mode: Error was: {}'.format( str(e) ) )            
 
-                for event in self._buffer:
+            for event in self._buffer:
 
-                    try:
-                        lastEventTimestamp = e._src['time'] # in this mode, the event timestamp is always assigned as the last timestamp
-                        self._sendEvents(self._url, [event]) # send one event
+                try:
+                    lastEventTimestamp = e._src['time'] # in this mode, the event timestamp is always assigned as the last timestamp
+                    if not event.is_robot:
+                        self._sendRequestsToMatomo(self._url, [event]) # send one event
                         self._totalSent += 1
+                        #logger.info('totalSent + 1 after error')
 
-                    except MatomoOfflineException as e: # if server is down break
-                        raise 
-                    
-                    except MatomoInternalServerException as e: # if there is some internal error will discard this event and log the result
-                        logger.error('Matomo internal error occurred: {} with event. This event will be discarded.\n {}'.format( str(e), event ) )            
-
-
-
-            if lastEventTimestamp != None:
-                self._configContext.save_last_tracked_timestamp(lastEventTimestamp)
-
-            self._requestsBuffer = []
+                except MatomoOfflineException as e: # if server is down break
+                    raise 
+                
+                except MatomoInternalServerException as e: # if there is some internal error will discard this event and log the result
+                    logger.error('Matomo internal error occurred: {} with event. This event will be discarded.\n {}'.format( str(e), event ) )            
 
 
+
+        if lastEventTimestamp != None:
+            self._configContext.history.save_last_tracked_timestamp(lastEventTimestamp)
+        
+        self._buffer = [] #Clean buffer
 
 
 class MatomoOutput:
@@ -208,12 +217,17 @@ class MatomoOutput:
     def run(self, events):
         
         processed = 0
+        robots_count = 0  
 
         for event in events:
             processed += 1
             self._sender.send(event)
-        
+            if event.is_robot == True: 
+                robots_count += 1            
+                
+        if robots_count == processed:
+            logger.debug('Everyone was a robot')
+
+        logger.debug('How many robots: {}'.format(robots_count))    
         self._sender.flush()
         logger.info('MatomoOutput finished processing {} events, sent {} succesfully'.format(processed, self._sender.getTotalSent()))
-
-

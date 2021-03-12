@@ -22,7 +22,7 @@ class SolrTimestampCursor(object):
         self.query = query
         self.baseQuery = self.query['q']
 
-    def fetch(self, rows=100, limit=None, initialTimestamp=None):
+    def fetch(self, rows=100, limit=None, initialTimestamp=None, untilDate=None):
         """ Generator method that grabs all the documents in bulk sets of
         'rows' documents
         :param rows: number of rows for each request
@@ -34,7 +34,12 @@ class SolrTimestampCursor(object):
 
         while not done:
 
-            self.query['q'] = self.baseQuery + (' +time:{"%s" TO *]' % lastTimestamp)
+
+            if untilDate != None:
+                self.query['q'] = self.baseQuery + (' +time:{"%s" TO "%s"]' % (lastTimestamp, untilDate))
+            else:
+                self.query['q'] = self.baseQuery + (' +time:{"%s" TO *]' % lastTimestamp)
+            
 
             if limit is not None:
                 rows = min(rows, limit - docs_retrieved)
@@ -69,6 +74,7 @@ class SolrStatisticsInput:
         self._rows = configContext.solrQueryRows
         self._limit = configContext.solrQueryLimit
         self._initialTimestamp = configContext.solrQueryInitialTimestamp
+        self._untilDate = configContext.solrQueryUntilDate
         self._solrServerURL = configContext.solrStatsCoreURL
 
     def run(self):
@@ -83,7 +89,7 @@ class SolrStatisticsInput:
         })
 
         n = 0
-        for docs in cursor.fetch(rows=self._rows, limit=self._limit, initialTimestamp = self._initialTimestamp):
+        for docs in cursor.fetch(rows=self._rows, limit=self._limit, initialTimestamp = self._initialTimestamp, untilDate = self._untilDate):
 
             logger.debug('{} SOLR docs retrieved. Converting docs to events'.format(len(docs)))
 

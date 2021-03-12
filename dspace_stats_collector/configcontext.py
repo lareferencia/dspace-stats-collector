@@ -10,6 +10,7 @@ import json
 import requests
 import os
 import sys
+from datetime import datetime
 from datetime import date
 
 try:
@@ -17,18 +18,54 @@ try:
 except Exception: #ImportError
     from dspacedb import DSpaceDB
 
-SAVE_DIR = os.path.expanduser('~') + '/.dspace_stats_collector'
+SAVE_DIR = os.path.expanduser('~') + "/dspace-stats-collector/var/timestamp"
 DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-stats-collector"
 DEFAULT_COLLECTOR_COMMAND_NAME="dspace-stats-collector"
 DEFAULT_CONFIG_PATH = DEFAULT_INSTALL_PATH + "/config"
 
-
 SOLR_STATS_CORE_NAME = "statistics"
 TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
 SOLR_QUERY_ROWS_SIZE = 10
+DEFAULT_OUPUT_LIMIT = 100
 COUNTER_ROBOTS_FILE = 'COUNTER_Robots_list.json'
 LAST_TRACKED_TIMESTAMP_HISTORY_FIELD = 'lastTrackedEventTimestamp'
 DEFAULT_ANONYMIZE_IP_MASK = '255.255.255.255'
+
+class History:
+
+    
+    #self.history = self._load_history()
+
+    def __init__(self, base_path, reponame):
+        self.javaprops = JavaProperties()
+        self.base_path = base_path
+        self.reponame = reponame
+        self.property_dict = {LAST_TRACKED_TIMESTAMP_HISTORY_FIELD:None}
+        self.filename = "{}/{}".format(base_path, reponame + ".dat")
+
+        try:
+            with open(self.filename) as f:
+                self.javaprops.load(f)
+            self.property_dict = self.javaprops.get_property_dict()
+            logger.debug("Read succesfully history file %s" % self.filename)
+        except (FileNotFoundError, UnboundLocalError):
+            logger.debug("History file %s does not exist. Creating one..." % self.filename)
+
+    def save_last_tracked_timestamp(self, timestamp):
+        try:
+            if not os.path.exists(self.base_path):
+                os.makedirs(self.base_path)
+            self.javaprops.set_property(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, timestamp)    
+            with open(self.filename, mode='w') as f:
+                self.javaprops.store(f)
+            self.property_dict = self.javaprops.get_property_dict()    
+        except (FileNotFoundError, UnboundLocalError):
+            logger.debug("Could not save to history file %s" % self.filename)
+            raise
+
+    def get_last_tracked_timestamp(self):
+        return self.property_dict.get(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, None)
+
 
 class ConfigurationContext:
 
@@ -36,6 +73,7 @@ class ConfigurationContext:
     defaultConfigPath = DEFAULT_CONFIG_PATH
     defaultCollectorCommand = DEFAULT_COLLECTOR_COMMAND_NAME
     defaultRepository = 'default'
+    defaultOuputLimit = DEFAULT_OUPUT_LIMIT
     counterRobotsFileName = COUNTER_ROBOTS_FILE
 
     def __init__(self, repoName, commandLineArgs):
@@ -46,12 +84,15 @@ class ConfigurationContext:
         self.properties = self._read_properties()
         self.dspaceProperties = self._read_dspace_properties()
 
-        # history
-        self.historyFilePath = SAVE_DIR
-        self.history = self._load_history()
+        #History
+        self.history = History(SAVE_DIR, repoName)
 
         # Solr Context
-        self.solrStatsCoreName = SOLR_STATS_CORE_NAME
+        if commandLineArgs.archived_core != None:
+            self.solrStatsCoreName = SOLR_STATS_CORE_NAME + "-" + commandLineArgs.archived_core
+        else:
+            self.solrStatsCoreName = SOLR_STATS_CORE_NAME
+
         self.solrServerURL = self._find_solr_server()
         self.solrStatsCoreURL = self.solrServerURL + "/" + self.solrStatsCoreName
 
@@ -61,15 +102,23 @@ class ConfigurationContext:
         # Solr Query parameters -     
         if commandLineArgs.date_from:
             self.solrQueryInitialTimestamp = commandLineArgs.date_from.strftime(TIMESTAMP_PATTERN)
-        elif LAST_TRACKED_TIMESTAMP_HISTORY_FIELD in self.history.keys():
-            self.solrQueryInitialTimestamp = self.history[LAST_TRACKED_TIMESTAMP_HISTORY_FIELD]
+        elif self.history.get_last_tracked_timestamp() != None:
+            self.solrQueryInitialTimestamp = self.history.get_last_tracked_timestamp()
             logger.debug('Loaded initialTimestamp from history: {}'.format(self.solrQueryInitialTimestamp))
         else:
             logger.debug('No initial date provided, using current date.')
             self.solrQueryInitialTimestamp = date.today().strftime(TIMESTAMP_PATTERN)
+        
+        if commandLineArgs.date_until:
+            self.solrQueryUntilDate = commandLineArgs.date_until.strftime(TIMESTAMP_PATTERN)
+        else:
+            self.solrQueryUntilDate = None
 
         self.solrQueryRows= SOLR_QUERY_ROWS_SIZE
-        self.solrQueryLimit= commandLineArgs.limit
+        
+        #self.solrQueryLimit= commandLineArgs.limit
+        self.solrQueryLimit = int(self.properties['solr.limit'])
+        logger.debug("Limit: %s" % self.solrQueryLimit)
         
         self.dspaceMajorVersion = self.properties['dspace.majorVersion']
 
@@ -96,6 +145,9 @@ class ConfigurationContext:
 
     def getMatomoUrl(self):
         return self.properties['matomo.trackerUrl']
+
+    def getSolrLimit(self):
+        return int(self.properties['solr.limit'])
 
     ################################################ private methods ##########################################
     def _read_properties(self):
@@ -182,49 +234,6 @@ class ConfigurationContext:
                 logger.error("Commit to Solr server failed")
 
         return solrServerURL
+    
 
-    def _load_history(self):
-        javaprops = JavaProperties()
-        property_dict = dict(lastTrackedEventTimestamp=None)
-        historyFileName = "{}/.{}".format(self.historyFilePath, self.repoName)
-
-        try:
-            with open(historyFileName) as f:
-                javaprops.load(f)
-            property_dict = javaprops.get_property_dict()
-            logger.debug("Read succesfully history file %s" % historyFileName)
-        except (FileNotFoundError, UnboundLocalError):
-            logger.debug("Could not read history file %s" % historyFileName)
-            pass
-
-        return property_dict
-
-
-    def save_last_tracked_timestamp(self, timestamp):
-        self._save_to_history(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, timestamp)
-
-    def _save_to_history(self, key, value):
-        javaprops = JavaProperties()
-        historyFileName = "{}/.{}".format(self.historyFilePath, self.repoName)
-
-        try:
-            with open(historyFileName) as f:
-                javaprops.load(f)
-        except (FileNotFoundError, UnboundLocalError):
-            logger.debug("Could not read history file %s" % historyFileName)
-            pass
-
-        javaprops.set_property(key, value)
-
-        try:
-            basedir = os.path.dirname(historyFileName)
-            if not os.path.exists(basedir):
-                os.makedirs(basedir)
-            with open(historyFileName, mode='w') as f:
-                javaprops.store(f)
-            self.history = javaprops.get_property_dict()
-        except (FileNotFoundError, UnboundLocalError):
-            logger.debug("Could not save to history file %s" % historyFileName)
-            raise
-
-        return
+    

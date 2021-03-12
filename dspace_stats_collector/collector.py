@@ -10,7 +10,6 @@ import argparse
 import os
 from datetime import datetime
 
-
 try:
     from .configcontext import ConfigurationContext
 except Exception: #ImportError
@@ -70,26 +69,49 @@ def main():
 
     args = parse_args()
 
+    if not os.path.exists(args.config_dir) :
+        os.mkdir(args.config_dir)
+
     if args.verbose:
         loglevel = logging.DEBUG
     else:
         loglevel = logging.INFO
+    
+    logDirName = os.path.expanduser('~') + "/dspace-stats-collector/var/logs"
+    if not os.path.exists(logDirName):
+        os.makedirs(logDirName)
 
-    logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
+    if args.date_from:
+        logFileName = "dspace-stats-collector."+args.date_from.strftime("%Y-%m-%d")+".log"
+    else:
+        logFileName = "dspace-stats-collector.log"
+    
+    logging.basicConfig(level=loglevel,
+                    format="%(levelname)s: %(message)s",
+                    filename="{}/{}".format(logDirName, logFileName),
+                    filemode='w')
+
     logger.debug("Verbose: %s" % args.verbose)
     logger.debug("Repository: %s" % args.repository)
     logger.debug("Configuration Directory: %s" % args.config_dir)
-    logger.debug("Limit: %s" % args.limit)
+    logger.debug("Archived core year selected: %s" % args.archived_core)
     
     if args.date_from:
         logger.debug("Date from: %s" % args.date_from.strftime("%Y-%m-%d"))
 
+    if args.date_until:
+        logger.debug("Date until: %s" % args.date_until.strftime("%Y-%m-%d"))
+
     #for repoName in args.repositories:
     repoName=args.repository
 
-    logger.info("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.date_from.strftime("%Y-%m-%d"))) 
-    
-    configContext = ConfigurationContext(repoName, args)
+    configContext = ConfigurationContext(repoName, args)    
+
+    if args.date_from:
+        logger.info("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.date_from.strftime("%Y-%m-%d")))
+    else:
+        logger.info("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), configContext.history.get_last_tracked_timestamp()))
+        
     eventPipeline = EventPipelineBuilder().build(configContext)
 
     try:    
@@ -123,12 +145,8 @@ def parse_args():
                         type=valid_date_type,
                         metavar="YYYY-MM-DD",
                         default=None,
+                        #default=datetime.today(),
                         help="collect events only from this date")
-    parser.add_argument("-l",
-                        "--limit",
-                        metavar="LIMIT",
-                        type=int,
-                        help="max number of events to output")
     parser.add_argument("-c",
                         "--config_dir",
                         metavar="DIR",
@@ -139,6 +157,17 @@ def parse_args():
                         help="increase output verbosity",
                         default=False,
                         action="store_true")
+    parser.add_argument("-a",
+                        "--archived_core",
+                        metavar="YYYY",
+                        help="previous year corresponding to a sharded statistics corer",
+                        default=None)
+    parser.add_argument("-u",
+                        "--date_until",
+                        type=valid_date_type,
+                        metavar="YYYY-MM-DD",
+                        default=None,
+                        help="collect events until this date")
     return parser.parse_args()
 
 
