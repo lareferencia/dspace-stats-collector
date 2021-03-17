@@ -11,6 +11,7 @@ import random
 from datetime import datetime
 from pytz import timezone
 import requests
+import copy
 
 # define Python user-defined exceptions
 class MatomoException(Exception):
@@ -120,25 +121,22 @@ class MatomoBufferedSender:
         return self._totalSent
 
     def send(self, event):
-        request_list = [ e._id for e in self._buffer ]
-        print(list(request_list))
-        self._buffer.append(event)
-        request_list = [ e._id for e in self._buffer ]
-        print(list(request_list))
+        self._buffer.append((event._matomoRequest, event.is_robot, event._src['time']))
+        #print(self._buffer)
         if self.isBufferFull():
+            logger.debug("Buffer is full")
             self.flush()
       
     def isBufferFull(self):
-        return len(self._buffer) >= self._bufferSize
+        return len(self._buffer) == self._bufferSize
 
     def _sendRequestsToMatomo(self, url, events):
+       
+        lastEventTimestamp = events[-1][2]
+        request_list = [m for (m, r, t) in events if not r ]
+        self._totalSent += len(request_list)
 
-        lastEventTimestamp = events[-1]._src['time'] 
-
-        try:
-            request_list = [ e._matomoRequest for e in events ]
-            #print(list(request_list))
-            #request_list = [ e._matomoRequest for e in events] 
+        try:            
             if len(request_list) > 0: #sends only non empty lists
                 http_response = requests.post(url, data = json.dumps( dict( requests = request_list, token_auth = self._configContext.getMatomoTokenAuth()) ))
                 #http_response = requests.post(url, data = json.dumps( dict( requests = [ e._matomoRequest for e in events if not e.is_robot  ], token_auth = self._configContext.getMatomoTokenAuth()) ))
@@ -151,15 +149,12 @@ class MatomoBufferedSender:
                 logger.debug("There are no events to send")  #Modificación MEMO#
         
         except requests.exceptions.HTTPError as e:
-            print(e)
             raise MatomoInternalServerException(str(e))
 
         except requests.exceptions.ConnectionError as e:
-            print(e)
             raise MatomoOfflineException(str(e))
             
         except requests.exceptions.RequestException as e:
-            print(e)
             raise MatomoOfflineException(str(e))
 
         return lastEventTimestamp
@@ -167,45 +162,45 @@ class MatomoBufferedSender:
 
     def flush(self):
 
-        lastEventTimestamp = None
-      
-        try: 
-            # try to send all buffered events        
-            lastEventTimestamp = self._sendRequestsToMatomo(self._url, self._buffer)
-            self._totalSent += len(self._buffer)
+        if(len(self._buffer)>0):
 
-        except MatomoOfflineException as e:
-            # if is offline will break the execution
-            raise
+            lastEventTimestamp = None
 
-        except MatomoInternalServerException as e:
+            try: 
+                # try to send all buffered events        
+                lastEventTimestamp = self._sendRequestsToMatomo(self._url, self._buffer)
 
-            # if some there is some internal problem, the will try to send each event 
+            except MatomoOfflineException as e:
+                # if is offline will break the execution
+                raise
 
-            logger.error('Matomo internal error detected processing events in bulk. Retrying in one event per request mode: Error was: {}'.format( str(e) ) )            
+            except MatomoInternalServerException as e:
 
-            for event in self._buffer:
+                # if some there is some internal problem, the will try to send each event 
 
-                try:
-                    lastEventTimestamp = e._src['time'] # in this mode, the event timestamp is always assigned as the last timestamp
-                    if not event.is_robot:
-                        self._sendRequestsToMatomo(self._url, [event]) # send one event
-                        self._totalSent += 1
-                        #logger.info('totalSent + 1 after error')
+                logger.error('Matomo internal error detected processing events in bulk. Retrying in one event per request mode: Error was: {}'.format( str(e) ) )            
 
-                except MatomoOfflineException as e: # if server is down break
-                    raise 
-                
-                except MatomoInternalServerException as e: # if there is some internal error will discard this event and log the result
-                    logger.error('Matomo internal error occurred: {} with event. This event will be discarded.\n {}'.format( str(e), event ) )            
+                for (m, r, t) in self._buffer:
+
+                    try:
+                        lastEventTimestamp = t # in this mode, the event timestamp is always assigned as the last timestamp
+                        if not r:
+                            self._sendRequestsToMatomo(self._url, [(m, r, t)]) # send one event
+                            self._totalSent += 1
+                            #logger.info('totalSent + 1 after error')
+
+                    except MatomoOfflineException as e: # if server is down break
+                        raise 
+                    
+                    except MatomoInternalServerException as e: # if there is some internal error will discard this event and log the result
+                        logger.error('Matomo internal error occurred: {} with event. This event will be discarded.\n {}'.format( str(e), event ) )            
 
 
 
-        if lastEventTimestamp != None:
-            self._configContext.history.save_last_tracked_timestamp(lastEventTimestamp)
-        
-        self._buffer = [] #Clean buffer
-
+            if lastEventTimestamp != None:
+                self._configContext.history.save_last_tracked_timestamp(lastEventTimestamp)
+            
+            self._buffer = [] #Clean buffer
 
 class MatomoOutput:
 
@@ -218,7 +213,7 @@ class MatomoOutput:
         
         processed = 0
         robots_count = 0  
-
+                
         for event in events:
             processed += 1
             self._sender.send(event)
@@ -228,6 +223,10 @@ class MatomoOutput:
         if robots_count == processed:
             logger.debug('Everyone was a robot')
 
-        logger.debug('How many robots: {}'.format(robots_count))    
+        logger.debug('How many robots: {}'.format(robots_count))
+        logger.debug('FORCE FLUSHING')
         self._sender.flush()
-        logger.info('MatomoOutput finished processing {} events, sent {} succesfully'.format(processed, self._sender.getTotalSent()))
+        
+        #logger.debug("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), configContext.history.get_last_tracked_timestamp())) 
+        logger.info('DSpace Stats Collector finished processing {} events from {} to {}. Breakdown: {} events sent succesfully, {} events discarted as robot'.format(processed, self._configContext.solrQueryInitialTimestamp, self._configContext.history.get_last_tracked_timestamp(), self._sender.getTotalSent(), robots_count))
+        

@@ -72,7 +72,7 @@ class SolrStatisticsInput:
     def __init__(self, configContext):
          
         self._rows = configContext.solrQueryRows
-        self._limit = configContext.solrQueryLimit
+        self._limit = configContext.maxEventsToSend
         self._initialTimestamp = configContext.solrQueryInitialTimestamp
         self._untilDate = configContext.solrQueryUntilDate
         self._solrServerURL = configContext.solrStatsCoreURL

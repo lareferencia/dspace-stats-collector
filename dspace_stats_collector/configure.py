@@ -45,8 +45,8 @@ dspace.majorVersion = $dspace_major_version
 # default solr server url 
 solr.server = http://localhost:8080/solr
 
-# default max number of events to ouput
-solr.limit = $solr_limit
+# default max number of events to send
+max.eventsToSend = $max_events
 
 # please do not modify this values
 matomo.rec = 1
@@ -79,10 +79,10 @@ def main():
 
     dspace_dir = "/dspace"
     dspace_major_version = 6
-    solr_limit = 100
+    max_events = 100
 
     # instantiate config template with default values
-    config_str = CONFIG_TEMPLATE.substitute(site_id=site_id, repository_id = repository_id, matomo_token_auth=matomo_token_auth, dspace_dir=dspace_dir, dspace_major_version=dspace_major_version, solr_limit=solr_limit)
+    config_str = CONFIG_TEMPLATE.substitute(site_id=site_id, repository_id = repository_id, matomo_token_auth=matomo_token_auth, dspace_dir=dspace_dir, dspace_major_version=dspace_major_version, max_events=max_events)
 
     # create config dir if not exists
     if not os.path.exists(args.config_dir) :

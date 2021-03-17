@@ -116,9 +116,8 @@ class ConfigurationContext:
 
         self.solrQueryRows= SOLR_QUERY_ROWS_SIZE
         
-        #self.solrQueryLimit= commandLineArgs.limit
-        self.solrQueryLimit = int(self.properties['solr.limit'])
-        logger.debug("Limit: %s" % self.solrQueryLimit)
+        self.maxEventsToSend = int(self.properties['max.eventsToSend'])
+        logger.debug("Limit: %s" % self.maxEventsToSend)
         
         self.dspaceMajorVersion = self.properties['dspace.majorVersion']
 

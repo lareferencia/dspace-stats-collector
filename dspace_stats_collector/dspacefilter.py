@@ -37,7 +37,7 @@ class DSpaceDBFilter:
                 raise ValueError
 
             if event._db is None:
-                logger.warning("Dropping event due db error on data recovery: {}".format(event._src))
+                logger.debug("Dropping event due db error on data recovery: {}".format(event._src))
                 continue # Drop event if could not recover data from db
 
             logger.debug('DSPACE_DB_FILTER:: Event: {}'.format(event._id))

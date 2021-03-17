@@ -60,9 +60,7 @@ class EventPipelineBuilder:
                 SimpleHashSessionFilter(configContext),
                 MatomoFilter(configContext)
             ],
-            [   MatomoOutput(configContext) 
-            #    ,ElasticsearchOutput(configContext)
-            ])
+            MatomoOutput(configContext)) 
 
 
 def main():
@@ -108,9 +106,9 @@ def main():
     configContext = ConfigurationContext(repoName, args)    
 
     if args.date_from:
-        logger.info("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.date_from.strftime("%Y-%m-%d")))
+        logger.debug("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.date_from.strftime("%Y-%m-%d")))
     else:
-        logger.info("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), configContext.history.get_last_tracked_timestamp()))
+        logger.debug("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), configContext.history.get_last_tracked_timestamp()))
         
     eventPipeline = EventPipelineBuilder().build(configContext)
 
@@ -123,7 +121,7 @@ def main():
     except Exception as e:
         logger.error("Unknown exception. Events will be processed in the next run. Error was: %s" % e)
     
-    logger.info("Repo succesfully processed: %s on: %s " % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S")) )
+    logger.debug("Repo succesfully processed: %s on: %s " % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S")) )
 
 def parse_args():
 

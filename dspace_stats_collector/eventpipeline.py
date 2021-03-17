@@ -34,12 +34,12 @@ class EventPipeline:
 
     _input_stage = None
     _filters_stage = []
-    _outputs_stage = []
+    _output_stage = None
 
     def __init__(self, input, filters, outputs):
         self._input_stage = input
         self._filters_stage = filters
-        self._outputs_stage = outputs
+        self._output_stage = outputs
 
     def run(self):
         events = self._input_stage.run()
@@ -48,18 +48,19 @@ class EventPipeline:
             events = filter.run(events)            
 
         try:
-            self._outputs_stage[0].run(events)
+            self._output_stage.run(events)
         except Exception as e: 
             logger.error( 'A fatal exception ocurred processing events !!!! {}'.format(e) )
             traceback.print_exc()
 
 
+
         """    
         # create and event iterator for every output (tee return tuple of size n)
-        events_iter = tee(events, len(self._outputs_stage)) 
+        events_iter = tee(events, len(self._output_stage)) 
        
         # run each output stage on each event iterator
-        for (output, teed_events) in zip(self._outputs_stage, events_iter):
+        for (output, teed_events) in zip(self._output_stage, events_iter):
             try:
                 output.run(teed_events)
             except Exception as e: 
