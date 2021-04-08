@@ -87,7 +87,7 @@ def main():
     logging.basicConfig(level=loglevel,
                     format="%(levelname)s: %(message)s",
                     filename="{}/{}".format(logDirName, logFileName),
-                    filemode='w')
+                    filemode='a')
 
     logger.debug("Verbose: %s" % args.verbose)
     logger.debug("Repository: %s" % args.repository)
