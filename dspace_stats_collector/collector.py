@@ -9,6 +9,8 @@ import sys
 import argparse
 import os
 from datetime import datetime
+import pid
+
 
 try:
     from .configcontext import ConfigurationContext
@@ -64,6 +66,18 @@ class EventPipelineBuilder:
 
 
 def main():
+    
+    try:
+        # run with pid locking mecanism
+        with pid.PidFile(pidname='/tmp/dspace_collector.pid') as p:
+            run()
+    
+    # PidFileError captures locking problems or already running instances
+    except pid.PidFileError as e:
+        logger.error("Dspace Stats Collector is already running. Error was: %s" % e)
+
+
+def run():
 
     args = parse_args()
 
@@ -106,9 +120,9 @@ def main():
     configContext = ConfigurationContext(repoName, args)    
 
     if args.date_from:
-        logger.debug("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.date_from.strftime("%Y-%m-%d")))
+        logger.debug("Start processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.date_from.strftime("%Y-%m-%d")))
     else:
-        logger.debug("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), configContext.history.get_last_tracked_timestamp()))
+        logger.debug("Start processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), configContext.history.get_last_tracked_timestamp()))
         
     eventPipeline = EventPipelineBuilder().build(configContext)
 
@@ -171,4 +185,3 @@ def parse_args():
 
 if __name__ == "__main__":
     main()
-
