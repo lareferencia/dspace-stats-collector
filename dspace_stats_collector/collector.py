@@ -135,6 +135,10 @@ def run():
     except Exception as e:
         logger.error("Unknown exception. Events will be processed in the next run. Error was: %s" % e)
     
+    # close all open resources in configContext (ie: dbconnection)
+    configContext.close()
+
+
     logger.debug("Repo succesfully processed: %s on: %s " % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S")) )
 
 def parse_args():

@@ -135,6 +135,10 @@ class ConfigurationContext:
     def getPropertiesFieldPath(config_dir, repoName):
         return "%s/%s.properties" % (config_dir, repoName)
 
+    def close(self):
+        logger.debug("Closing resources")
+        self.db.close()
+
     ############################################### public methods   ###########################################
     def getMatomoOutputSize(self):
         return int(self.properties['matomo.batchSize'])

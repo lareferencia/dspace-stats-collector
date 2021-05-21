@@ -217,3 +217,7 @@ class DSpaceDB:
             self._dfResources = self._dfResources.append(dfRecord)
         return self._dfResources.loc[itemId].to_dict()
 
+    def close(self):
+        logger.debug("Closing dspace db connection")
+        self.conn.close()
+
