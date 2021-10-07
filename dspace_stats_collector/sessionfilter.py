@@ -22,8 +22,8 @@ class SimpleHashSessionFilter:
         for event in events:
             srcString = "{:%Y-%m-%d}#{}#{}".format(
                             dateutil_parser.parse(event._src['time']),
-                            event._src['ip'],
-                            event._src['userAgent']
+                            event._src.get('ip', '0.0.0.0'),
+                            event._src.get('userAgent', None)
                         )
             sessDict = {
                         'id': md5(srcString.encode()).hexdigest(),
@@ -33,7 +33,7 @@ class SimpleHashSessionFilter:
 
             # Anonymize IP
             if self._anonymize_ip_mask != self.FULL_IP_MASK:     
-                event._src['ip'] = anonymize_ip(event._src['ip'], self._anonymize_ip_mask)    
+                event._src['ip'] = anonymize_ip(event._src.get('ip','0.0.0.0'), self._anonymize_ip_mask)    
 
             logger.debug('SESSION_FILTER:: Event: {} Session string: {}'.format(event._id, srcString))
 

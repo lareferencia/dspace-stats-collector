@@ -75,7 +75,7 @@ class MatomoFilter:
                 # event.download does not get generated
 
             params['token_auth'] = self._repoProperties['matomo.token_auth']
-            params['cip'] = event._src['ip']
+            params['cip'] = event._src.get('ip', '0.0.0.0')
 
             srctime = event._src['time']
             try:  # parse with or without milliseconds
