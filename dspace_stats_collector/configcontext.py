@@ -151,6 +151,9 @@ class ConfigurationContext:
 
     def getSolrLimit(self):
         return int(self.properties['solr.limit'])
+    
+    def getDspaceMajorVersion(self):
+        return int(self.properties['dspace.majorVersion'])
 
     ################################################ private methods ##########################################
     def _read_properties(self):
@@ -170,23 +173,34 @@ class ConfigurationContext:
     def _read_dspace_properties(self):
         javaprops = JavaProperties()
 
-        try:
-            propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
-            javaprops.load(open(propertiesFilename))
-            property_dict = javaprops.get_property_dict()
-            logger.debug("Read succesfully property file %s" % propertiesFilename)
-        except (FileNotFoundError, UnboundLocalError):
-            logger.exception("Error while trying to read properties file %s" % propertiesFilename)
-            raise
+        if self.getDspaceMajorVersion() == 6:
+            try:
+                propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
+                javaprops.load(open(propertiesFilename))
+                property_dict = javaprops.get_property_dict()
+                logger.debug("Read succesfully property file %s" % propertiesFilename)
+            except (FileNotFoundError, UnboundLocalError):
+                logger.exception("Error while trying to read properties file %s" % propertiesFilename)
+                raise
 
-        try:
-            propertiesFilename = "%s/config/local.cfg" % (self.properties["dspace.dir"])
-            javaprops.load(open(propertiesFilename))
-            property_dict = javaprops.get_property_dict()
-            logger.debug("Read succesfully property file %s" % propertiesFilename)
-        except (FileNotFoundError, UnboundLocalError):
-            logger.debug("Could not read property file %s" % propertiesFilename)
-            pass
+            try:
+                propertiesFilename = "%s/config/local.cfg" % (self.properties["dspace.dir"])
+                javaprops.load(open(propertiesFilename))
+                property_dict = javaprops.get_property_dict()
+                logger.debug("Read succesfully property file %s" % propertiesFilename)
+            except (FileNotFoundError, UnboundLocalError):
+                logger.debug("Could not read property file %s" % propertiesFilename)
+                pass
+
+        else:
+            try:
+                propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
+                javaprops.load(open(propertiesFilename))
+                property_dict = javaprops.get_property_dict()
+                logger.debug("Read succesfully property file %s" % propertiesFilename)
+            except (FileNotFoundError, UnboundLocalError):
+                logger.exception("Error while trying to read properties file %s" % propertiesFilename)
+                raise
 
         return property_dict
 

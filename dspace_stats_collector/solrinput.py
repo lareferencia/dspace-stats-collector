@@ -38,7 +38,8 @@ class SolrTimestampCursor(object):
             if untilDate != None:
                 self.query['q'] = self.baseQuery + (' +time:{"%s" TO "%s"]' % (lastTimestamp, untilDate))
             else:
-                self.query['q'] = self.baseQuery + (' +time:{"%s" TO *]' % lastTimestamp)
+                #self.query['q'] = self.baseQuery + (' +time:{"%s" TO *]' % lastTimestamp)
+                self.query['q'] = self.baseQuery + (' +time:{"%s" TO %s+30DAYS]' % (lastTimestamp,lastTimestamp))
             
 
             if limit is not None:
