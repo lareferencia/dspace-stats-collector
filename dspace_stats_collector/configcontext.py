@@ -136,7 +136,7 @@ class ConfigurationContext:
         elif self.dspaceMajorVersion == '6':
             self.db = DSpaceDB6(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
         else:
-            logger.error('Only implemented values for dspace.majorVersion are 4, 5 and 6. Received {}'.format(self.dspaceMajorVersion)
+            logger.error('Only implemented values for dspace.majorVersion are 4, 5 and 6. Received {}'.format(self.dspaceMajorVersion))
             raise NotImplementedError
 
 
