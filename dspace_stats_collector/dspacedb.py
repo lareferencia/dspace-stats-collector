@@ -60,8 +60,6 @@ class DSpaceDB:
 
     def queryDownload(self, bitstreamId): #, owningItem):
 
-        self._dcTitleId = self.getDcTitleId()
-
         if bitstreamId not in self._dfResources.index.values:
             SQL = self._queryDownloadSQL.format(
                     dcTitleId = self._dcTitleId,
@@ -80,8 +78,6 @@ class DSpaceDB:
         return self._dfResources.loc[bitstreamId].to_dict()
 
     def queryItem(self, itemId):
-
-        self._dcTitleId = self.getDcTitleId()
     
         if itemId not in self._dfResources.index.values:
             SQL = self._queryItemSQL.format(
