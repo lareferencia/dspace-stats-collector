@@ -14,9 +14,14 @@ from datetime import datetime
 from datetime import date
 
 try:
-    from .dspacedb import DSpaceDB
+    from .dspacedb4 import DSpaceDB4
+    from .dspacedb5 import DSpaceDB5
+    from .dspacedb6 import DSpaceDB6
 except Exception: #ImportError
-    from dspacedb import DSpaceDB
+    from dspacedb4 import DSpaceDB4
+    from dspacedb5 import DSpaceDB5
+    from dspacedb6 import DSpaceDB6
+
 
 SAVE_DIR = os.path.expanduser('~') + "/dspace-stats-collector/var/timestamp"
 DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-stats-collector"
@@ -123,13 +128,18 @@ class ConfigurationContext:
 
         self.anonymize_ip_mask = self.properties.get('anonymize.ip_mask', DEFAULT_ANONYMIZE_IP_MASK)
 
-        self.db = DSpaceDB(
-                        self.dspaceProperties['db.url'],
-                        self.dspaceProperties['db.username'],
-                        self.dspaceProperties['db.password'],
-                        self.dspaceProperties.get('db.schema','public'),
-                        self.dspaceMajorVersion
-                    )
+
+        if self.dspaceMajorVersion == '4':
+            self.db = DSpaceDB4(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '5':
+            self.db = DSpaceDB5(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '6':
+            self.db = DSpaceDB6(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        else:
+            logger.error('Only implemented values for dspace.majorVersion are 4, 5 and 6. Received {}'.format(self.dspaceMajorVersion)
+            raise NotImplementedError
+
+
 
     @staticmethod
     def getPropertiesFieldPath(config_dir, repoName):
