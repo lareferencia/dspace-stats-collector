@@ -14,7 +14,7 @@ class DSpaceDB6:
 
     def __init__(self, jdbcUrl, username, password):
 
-        super().__init__(jdbcUrl, username, password)
+        DSpaceDB.__init__(self,jdbcUrl, username, password)
 
         self._queryDownloadSQL = """
             SELECT mv.dspace_object_id::text AS id,

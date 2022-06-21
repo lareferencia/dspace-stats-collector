@@ -14,7 +14,7 @@ class DSpaceDB4(DSpaceDB):
 
     def __init__(self, jdbcUrl, username, password):
 
-        super().__init__(jdbcUrl, username, password)
+        DSpaceDB.__init__(self,jdbcUrl, username, password)
       
         self._queryDownloadSQL = """
            SELECT C.bitstream_id as id, record_title, handle, is_download, owning_item, sequence_id, filename FROM
