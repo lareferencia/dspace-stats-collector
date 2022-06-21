@@ -70,7 +70,7 @@ class DSpaceDB5(DSpaceDB):
                AND qualifier IS NULL;
         """
 
-        self._dcTitleId = self.getDcTitleId()
+        self._dcTitleId = DSpaceDB.getDcTitleId(self)
 
         
         
