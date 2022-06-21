@@ -5,7 +5,10 @@
 import logging
 logger = logging.getLogger()
 
-from dspacedb import DSpaceDB
+try:
+    from .dspacedb import DSpaceDB
+except Exception: #ImportError
+    from dspacedb import DSpaceDB
 
 class DSpaceDB6:
 

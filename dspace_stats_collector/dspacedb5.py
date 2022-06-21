@@ -9,6 +9,10 @@ import sqlalchemy
 import re
 import pandas as pd
 
+try:
+    from .dspacedb import DSpaceDB
+except Exception: #ImportError
+    from dspacedb import DSpaceDB
 
 class DSpaceDB5(DSpaceDB):
 
