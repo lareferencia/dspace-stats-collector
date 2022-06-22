@@ -19,7 +19,6 @@ class DSpaceDB5(DSpaceDB):
     def __init__(self, jdbcUrl, username, password):
 
         DSpaceDB.__init__(self,jdbcUrl, username, password)
-
        
         self._queryDownloadSQL = """
             SELECT mv.resource_id AS id,
@@ -70,7 +69,7 @@ class DSpaceDB5(DSpaceDB):
                AND qualifier IS NULL;
         """
 
-        self._dcTitleId = DSpaceDB.getDcTitleId(self)
+        self._dcTitleId = self.getDcTitleId()
 
         
         

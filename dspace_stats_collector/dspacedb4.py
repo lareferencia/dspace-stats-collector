@@ -64,6 +64,6 @@ class DSpaceDB4(DSpaceDB):
                AND qualifier IS NULL;
         """
 
-        self._dcTitleId = DSpaceDB.getDcTitleId(self)
+        self._dcTitleId = self.getDcTitleId()
 
        

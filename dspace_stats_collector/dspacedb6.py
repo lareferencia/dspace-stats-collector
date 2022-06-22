@@ -10,7 +10,7 @@ try:
 except Exception: #ImportError
     from dspacedb import DSpaceDB
 
-class DSpaceDB6:
+class DSpaceDB6(DSpaceDB):
 
     def __init__(self, jdbcUrl, username, password):
 
@@ -62,7 +62,7 @@ class DSpaceDB6:
                 AND qualifier IS NULL;
         """
 
-        self._dcTitleId = DSpaceDB.getDcTitleId(self)
+        self._dcTitleId = self.getDcTitleId()
 
 
 
