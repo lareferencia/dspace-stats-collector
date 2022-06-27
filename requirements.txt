@@ -15,7 +15,7 @@ pyjavaprops==1.0.2
 SQLAlchemy==1.2.15
 psycopg2-binary==2.8
 pysolr==3.8.1
-pandas
+pandas==1.2
 urllib3==1.24.2
 pytz==2018.7
 python-crontab
