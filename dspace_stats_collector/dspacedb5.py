@@ -5,10 +5,6 @@
 import logging
 logger = logging.getLogger()
 
-import sqlalchemy
-import re
-import pandas as pd
-
 try:
     from .dspacedb import DSpaceDB
 except Exception: #ImportError

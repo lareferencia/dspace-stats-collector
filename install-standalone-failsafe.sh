@@ -1,32 +1,30 @@
 #!/bin/bash
 #
 
-
-
 INSTALL_PATH=$HOME/dspace-stats-collector
 MINICONDA_URL_PREFIX='https://repo.anaconda.com/miniconda/'
+
+rm -rf $INSTALL_PATH
+rm -f delete_this_file.sh
 
 MACHINE_TYPE=`uname -m`
 if [ ${MACHINE_TYPE} == 'x86_64' ]; then
   # 64-bit stuff here
-  MINICONDA_FILE='Miniconda2-4.5.12-Linux-x86_64.sh'
+  MINICONDA_FILE='Miniconda3-py37_4.8.3-Linux-x86_64.sh'
 else
   # 32-bit stuff here
-  MINICONDA_FILE='Miniconda2-4.5.12-Linux-x86.sh'
+  MINICONDA_FILE='Miniconda3-py37_4.8.3-Linux-x86.sh'
 fi
 
 MINICONDA_URL=$MINICONDA_URL_PREFIX$MINICONDA_FILE
 
-if [[ `wget -S --spider $MINICONDA_URL 2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then 
-  echo 'Downloading Miniconda ..'
+if [ -x "$(which curl)" ]; then
+  curl $MINICONDA_URL -o delete_this_file.sh 
 else
-  echo 'File cannot be downloaded / check if wget is installed and internet connection is available'
-  exit 
+    echo "Could not find curl or connection is not available, please install curl." >&2
 fi
 
-wget $MINICONDA_URL
-
-bash $MINICONDA_FILE -b -f -p $INSTALL_PATH
+bash delete_this_file.sh -b -f -p $INSTALL_PATH
 
 cd $INSTALL_PATH
 
