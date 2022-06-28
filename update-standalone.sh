@@ -8,7 +8,7 @@ echo "Updating dspace-stats-collector version"
 echo "Installing dspace-stats-collector package dependencies"
 rm -f $INSTALL_PATH/requirements.txt
 
-python_version = `$INSTALL_PATH/bin/python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\2/'`
+python_version=`$INSTALL_PATH/bin/python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\2/'`
 echo "Python version: $python_version"
 
 requirements_file="requirements.txt"
