@@ -193,7 +193,7 @@ class MatomoBufferedSender:
                         raise 
                     
                     except MatomoInternalServerException as e: # if there is some internal error will discard this event and log the result
-                        logger.error('Matomo internal error occurred: {} with event. This event will be discarded.\n {}'.format( str(e), event ) )            
+                        logger.error('Matomo internal error occurred: {} with event. This event will be discarded.\n'.format( str(e)) )            
 
 
 
