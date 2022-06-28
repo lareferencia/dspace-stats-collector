@@ -21,15 +21,17 @@ MINICONDA_URL=$MINICONDA_URL_PREFIX$MINICONDA_FILE
 if [ -x "$(which curl)" ]; then
   curl $MINICONDA_URL -o delete_this_file.sh 
 else
-    echo "Could not find curl or connection is not available, please install curl." >&2
+    echo "Could not find curl, please install curl." >&2
+    exit
 fi
 
 bash delete_this_file.sh -b -f -p $INSTALL_PATH
+rm delete_this_file.sh
 
 cd $INSTALL_PATH
 
 echo "Installing dspace-stats-collector package dependencies"
-wget https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/requirements.txt
+curl https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/requirements.txt -o requirements.txt
 $INSTALL_PATH/bin/pip install -r requirements.txt
 
 echo "Installing dspace-stats-collector package"
