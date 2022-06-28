@@ -46,7 +46,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    description="A python library for sending usage stats events from Dspace to Matomo & ELK",
+    description="A python library for sending usage stats events from Dspace to Matomo",
     install_requires=requirements,
     license="GNU General Public License v3",
     long_description=readme,
@@ -61,6 +61,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/lareferencia/dspace-stats-collector',
-    version='0.5.5',
+    version='0.5.6',
     zip_safe=False,
 )
