@@ -15,7 +15,7 @@ else
     exit
 fi
 
-$INSTALL_PATH/bin/pip install -r requirements.txt
+$INSTALL_PATH/bin/pip install -r $INSTALL_PATH/requirements.txt
 
 echo "Removing dspace-stats-collector installed version"
 $INSTALL_PATH/bin/pip uninstall --yes dspace-stats-collector
