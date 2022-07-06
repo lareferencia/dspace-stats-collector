@@ -16,7 +16,7 @@ elif [ ${MACHINE_TYPE} == 'x86' ]; then
   MINICONDA_FILE='Miniconda3-py37_4.8.3-Linux-x86.sh'
 elif [ ${MACHINE_TYPE} == 'aarch64' ]; then
   # Raspberry Pi stuff here
-  MINICONDA_FILE='Miniconda3-py37_4.8.3-Linux-aarch64.sh'
+  MINICONDA_FILE='Miniconda3-py37_4.9.2-Linux-aarch64.sh'
 else
   echo "Unknown machine type: ${MACHINE_TYPE}"
   exit 1
