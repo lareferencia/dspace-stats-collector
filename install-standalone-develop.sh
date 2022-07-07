@@ -44,7 +44,7 @@ $INSTALL_PATH/bin/pip install -r $INSTALL_PATH/requirements.txt
 
 $INSTALL_PATH/bin/conda install -y git 
 
-$INSTALL_PATH/bin/git clone --brance=develop https://github.com/lareferencia/dspace-stats-collector.git
+$INSTALL_PATH/bin/git clone --branch=develop https://github.com/lareferencia/dspace-stats-collector.git
 
 cd $INSTALL_PATH/dspace-stats-collector
 $INSTALL_PATH/bin/python setup.py install
