@@ -15,7 +15,7 @@ elif [ ${MACHINE_TYPE} == 'x86' ]; then
   # 32-bit stuff here
   MINICONDA_FILE='Miniconda3-py37_4.8.3-Linux-x86.sh'
 elif [ ${MACHINE_TYPE} == 'aarch64' ]; then
-  # Raspberry Pi stuff here
+  # ARM stuff here (EXPERIMENTAL)
   MINICONDA_FILE='Miniconda3-py37_4.9.2-Linux-aarch64.sh'
 else
   echo "Unknown machine type: ${MACHINE_TYPE}"
@@ -23,6 +23,8 @@ else
 fi
 
 MINICONDA_URL=$MINICONDA_URL_PREFIX$MINICONDA_FILE
+
+echo $MINICONDA_URL
 
 if [ -x "$(which curl)" ]; then
   curl $MINICONDA_URL -o delete_this_file.sh 
@@ -37,12 +39,15 @@ rm delete_this_file.sh
 cd $INSTALL_PATH
 
 echo "Installing dspace-stats-collector package dependencies"
-curl https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/requirements-p37.txt -o requirements.txt
-$INSTALL_PATH/bin/pip install -r requirements.txt
+curl https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/requirements-p37.txt -o $INSTALL_PATH/requirements.txt
+$INSTALL_PATH/bin/pip install -r $INSTALL_PATH/requirements.txt
 
 $INSTALL_PATH/bin/conda install -y git 
 
 $INSTALL_PATH/bin/git clone --brance=develop https://github.com/lareferencia/dspace-stats-collector.git
+
+cd $INSTALL_PATH/dspace-stats-collector
+$INSTALL_PATH/bin/python setup.py install
 
 
 
