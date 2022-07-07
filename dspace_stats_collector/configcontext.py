@@ -17,11 +17,18 @@ try:
     from .dspacedb4 import DSpaceDB4
     from .dspacedb5 import DSpaceDB5
     from .dspacedb6 import DSpaceDB6
+    from .dspacedb7 import DSpaceDB7
+    from .dspacedb5cris import DSpaceDB5Cris
+    from .dspacedb5oracle import DSpaceDB5Oracle
+    from .dspacedb6oracle import DSpaceDB6Oracle
 except Exception: #ImportError
     from dspacedb4 import DSpaceDB4
     from dspacedb5 import DSpaceDB5
     from dspacedb6 import DSpaceDB6
-
+    from dspacedb7 import DSpaceDB7
+    from dspacedb5cris import DSpaceDB5Cris
+    from dspacedb5oracle import DSpaceDB5Oracle
+    from dspacedb6oracle import DSpaceDB6Oracle
 
 SAVE_DIR = os.path.expanduser('~') + "/dspace-stats-collector/var/timestamp"
 DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-stats-collector"
@@ -135,6 +142,14 @@ class ConfigurationContext:
             self.db = DSpaceDB5(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
         elif self.dspaceMajorVersion == '6':
             self.db = DSpaceDB6(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '7':
+            self.db = DSpaceDB7(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '5o':
+            self.db = DSpaceDB5Oracle(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '6o':
+            self.db = DSpaceDB6Oracle(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '5c':
+            self.db = DSpaceDB5Cris(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
         else:
             logger.error('Only implemented values for dspace.majorVersion are 4, 5 and 6. Received {}'.format(self.dspaceMajorVersion))
             raise NotImplementedError

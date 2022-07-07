@@ -17,26 +17,36 @@ class DSpaceDB:
         # Parse jdbc url
         # Postgres template: jdbc:postgresql://localhost:5432/dspace
         # Oracle template: jdbc:oracle:thin:@//localhost:1521/xe
-        m = re.match("^jdbc:(postgresql|oracle):[^\/]*\/\/([^:]+):(\d+)/(.*)$", jdbcUrl)
+        # Oracle template: jdbc:oracle:thin:@localhost:1521:xe
+        m = re.match("^jdbc:(postgresql|oracle):[^\/|^@]*[@\/\/|\/\/|@]*([^:]+):(\d+)(\/|:)(.*)$", jdbcUrl)
+
         if m is None:
             logger.error("Could not parse db.url string: %s" % jdbcUrl)
             raise ValueError
 
-        (engine, hostname, port, database) = m.group(1, 2, 3, 4)
+        # separate host, port, dbname, and dbschema and separator 
+        (engine, hostname, port, separator, database) = m.group(1, 2, 3, 4, 5)
 
-        if engine != "postgresql":
-            logger.error("DB Engine not yet supported: %s" % engine)
-            raise NotImplementedError
+        # Create connection string depending on engine
+        if engine == 'postgresql':
+            connStringTemplate = 'postgresql://{username}:{password}@{hostname}:{port}' + separator + '{database}'
+        if engine == 'oracle':
+            if separator == ':':
+                connStringTemplate = 'oracle+cx_oracle://{username}:{password}@{hostname}:{port}:{database}'
+            elif separator == '/':
+                connStringTemplate = 'oracle+cx_oracle://{username}:{password}@{hostname}/{database}'
 
-        self.connString = '{engine}://{username}:{password}@{hostname}:{port}/{database}'
-        self.connString = self.connString.format(
+
+        # Create connection string based on engine, hostname, port, database. Use separator to determine the kind of oracle connection
+        self.connString = connStringTemplate.format(
                 engine=engine,
                 username=username,
                 password=password,
                 hostname=hostname,
                 port=port,
                 database=database,
-                )
+        )
+
         logger.debug('DB Connection String: ' + self.connString)
         try:
             self.conn = sqlalchemy.create_engine(self.connString).connect()
