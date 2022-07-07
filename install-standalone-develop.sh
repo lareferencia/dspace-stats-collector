@@ -49,5 +49,8 @@ $INSTALL_PATH/bin/git clone --branch=develop https://github.com/lareferencia/dsp
 cd $INSTALL_PATH/dspace-stats-collector
 $INSTALL_PATH/bin/python setup.py install
 
+echo "Installing config files"
+$INSTALL_PATH/bin/dspace-stats-configure
+
 
 
