@@ -32,11 +32,11 @@ class DSpaceDB:
             connStringTemplate = 'postgresql://{username}:{password}@{hostname}:{port}' + separator + '{database}'
         if engine == 'oracle':
             if separator == ':':
-                connStringTemplate = 'oracle+cx_oracle://{username}:{password}@{hostname}:{port}:{database}'
+                connStringTemplate = 'oracle+cx_oracle://{username}:{password}@{hostname}:{port}/?service_name={database}'
             elif separator == '/':
-                connStringTemplate = 'oracle+cx_oracle://{username}:{password}@{hostname}/{database}'
+                connStringTemplate = 'oracle+cx_oracle://{username}:{password}@{hostname}:{port}/{database}'
 
-
+       
         # Create connection string based on engine, hostname, port, database. Use separator to determine the kind of oracle connection
         self.connString = connStringTemplate.format(
                 engine=engine,

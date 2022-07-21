@@ -34,7 +34,7 @@ class DSpaceDB6Oracle(DSpaceDB):
                 AND b.sequence_id IS NOT NULL
                 AND b.deleted = FALSE
                 AND mv2.metadata_field_id = {dcTitleId}
-                AND mv.dspace_object_id::text = '{bitstreamId}';
+                AND mv.dspace_object_id = uuid('{bitstreamId}');
         """
 
         self._queryItemSQL = """
@@ -49,7 +49,7 @@ class DSpaceDB6Oracle(DSpaceDB):
             RIGHT JOIN handle AS h ON h.resource_id = mv.dspace_object_id
             WHERE metadata_field_id = {dcTitleId}
                 AND h.resource_type_id=2
-                AND mv.dspace_object_id::text = '{itemId}';
+                AND mv.dspace_object_id = uuid('{itemId}');
         """
       
         self._queryTitleSQL = """
