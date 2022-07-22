@@ -39,7 +39,7 @@ rm delete_this_file.sh
 cd $INSTALL_PATH
 
 echo "Installing dspace-stats-collector package dependencies"
-curl https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/requirements-p37.txt -o $INSTALL_PATH/requirements.txt
+curl https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/develop/requirements-p37.txt -o $INSTALL_PATH/requirements.txt
 $INSTALL_PATH/bin/pip install -r $INSTALL_PATH/requirements.txt
 
 $INSTALL_PATH/bin/conda install -y git 
