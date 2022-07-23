@@ -37,8 +37,13 @@ class MatomoFilter:
             self._handleCanonicalPrefix = dspaceProperties['handle.canonical.prefix']
         else:
             self._handleCanonicalPrefix = 'http://hdl.handle.net/'
-        self._dspaceHostname = dspaceProperties['dspace.hostname']
-        self._dspaceUrl = dspaceProperties['dspace.url']
+            
+        if configContext.getDspaceMajorVersion() == 7:
+            self._dspaceHostname = dspaceProperties['dspace.server.url']
+            self._dspaceUrl = dspaceProperties['dspace.ui.url']
+        else:
+            self._dspaceHostname = dspaceProperties['dspace.hostname']
+            self._dspaceUrl = dspaceProperties['dspace.url']
 
         self._repoProperties = configContext.properties
 
