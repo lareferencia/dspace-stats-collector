@@ -178,7 +178,7 @@ class ConfigurationContext:
         return int(self.properties['solr.limit'])
     
     def getDspaceMajorVersion(self):
-        return int(self.properties['dspace.majorVersion'])
+        return str(self.properties['dspace.majorVersion'])
 
     ################################################ private methods ##########################################
     def _read_properties(self):
@@ -198,7 +198,7 @@ class ConfigurationContext:
     def _read_dspace_properties(self):
         javaprops = JavaProperties()
 
-        if self.getDspaceMajorVersion() == 6:
+        if self.getDspaceMajorVersion() == '6':
             try:
                 propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
                 javaprops.load(open(propertiesFilename))
@@ -216,6 +216,16 @@ class ConfigurationContext:
             except (FileNotFoundError, UnboundLocalError):
                 logger.debug("Could not read property file %s" % propertiesFilename)
                 pass
+
+        elif self.getDspaceMajorVersion() == '5c':
+            try:
+                propertiesFilename = "%s/build.properties" % (self.properties["dspace.dir"])
+                javaprops.load(open(propertiesFilename))
+                property_dict = javaprops.get_property_dict()
+                logger.debug("Read succesfully property file %s" % propertiesFilename)
+            except (FileNotFoundError, UnboundLocalError):
+                logger.exception("Error while trying to read properties file %s" % propertiesFilename)
+                raise
 
         else:
             try:

@@ -38,7 +38,7 @@ class MatomoFilter:
         else:
             self._handleCanonicalPrefix = 'http://hdl.handle.net/'
             
-        if configContext.getDspaceMajorVersion() == 7:
+        if configContext.getDspaceMajorVersion() == '7':
             self._dspaceHostname = dspaceProperties['dspace.server.url']
             self._dspaceUrl = dspaceProperties['dspace.ui.url']
         else:
