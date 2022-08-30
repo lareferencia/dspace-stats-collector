@@ -21,7 +21,7 @@ A python agent for sending DSpace usage statistics events to Matomo/OpenAIRE.
 
 * Free software: GNU General Public License v3
 
-* Documentation: https://dspace-stats-collector.readthedocs.io.
+* Documentation: http://doc.lareferencia.info/es/public/estadisticas/dspace-stats-collector
 
 
 Implementation of a lightweight, easy-to-deploy, read-only alternative for a DSpace usage data collector compatible with Matomo and OpenAire usage statistics infrastructure. It sends usage data from individual repositories to an external regional aggregator by issuing read-only queries to the out-of-the-box DSpace Solr statistics subsystem.  
@@ -65,15 +65,6 @@ In this first version of the agent, the following  stages have been implemented 
 .. image::  https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/docs/pipeline-diagram.png
 
 The resulting pipeline runs from the main collector script that stores the last successfully sent timestamp as a state for future calls. 
-
-
-.. include:: ./INSTALLATION.rst
-
-Installation
-------------
-
-https://dspace-stats-collector.readthedocs.io/en/latest/installation.html
-
 
 Credits
 -------
