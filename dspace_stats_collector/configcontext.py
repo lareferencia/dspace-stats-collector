@@ -35,7 +35,7 @@ DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-stats-collector"
 DEFAULT_COLLECTOR_COMMAND_NAME="dspace-stats-collector"
 DEFAULT_CONFIG_PATH = DEFAULT_INSTALL_PATH + "/config"
 
-SOLR_STATS_CORE_NAME = "statistics"
+DEFAULT_SOLR_STATS_CORE_NAME = "statistics"
 TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
 SOLR_QUERY_ROWS_SIZE = 10
 DEFAULT_OUPUT_LIMIT = 100
@@ -101,9 +101,9 @@ class ConfigurationContext:
 
         # Solr Context
         if commandLineArgs.archived_core != None:
-            self.solrStatsCoreName = SOLR_STATS_CORE_NAME + "-" + commandLineArgs.archived_core
+            self.solrStatsCoreName = self.getSolrStatsCoreName() + "-" + commandLineArgs.archived_core
         else:
-            self.solrStatsCoreName = SOLR_STATS_CORE_NAME
+            self.solrStatsCoreName = self.getSolrStatsCoreName()
 
         self.solrServerURL = self._find_solr_server()
         self.solrStatsCoreURL = self.solrServerURL + "/" + self.solrStatsCoreName
@@ -180,6 +180,9 @@ class ConfigurationContext:
     def getDspaceMajorVersion(self):
         return str(self.properties['dspace.majorVersion'])
 
+    def getSolrStatsCoreName(self):
+        return str( self.properties.get('solr.core', DEFAULT_SOLR_STATS_CORE_NAME) )
+
     ################################################ private methods ##########################################
     def _read_properties(self):
         javaprops = JavaProperties()
@@ -207,15 +210,6 @@ class ConfigurationContext:
             except (FileNotFoundError, UnboundLocalError):
                 logger.exception("Error while trying to read properties file %s" % propertiesFilename)
                 raise
-
-            try:
-                propertiesFilename = "%s/config/local.cfg" % (self.properties["dspace.dir"])
-                javaprops.load(open(propertiesFilename))
-                property_dict = javaprops.get_property_dict()
-                logger.debug("Read succesfully property file %s" % propertiesFilename)
-            except (FileNotFoundError, UnboundLocalError):
-                logger.debug("Could not read property file %s" % propertiesFilename)
-                pass
 
         elif self.getDspaceMajorVersion() == '5c':
             try:
