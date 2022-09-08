@@ -101,7 +101,7 @@ def run():
     else:
         logFileName = "dspace-stats-collector.log"
     
-    logging_handlers = [ logging.FileHandler("{}/{}".format(logDirName, logFileName)) ]
+    logging_handlers = [ logging.FileHandler("{}/{}".format(logDirName, logFileName), 'w+') ]
 
     # if we are in verbose mode, also log to console
     if args.verbose:
