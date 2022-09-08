@@ -98,18 +98,12 @@ def run():
     else:
         logFileName = "dspace-stats-collector.log"
     
-    logFormatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
-    rootLogger = logging.getLogger()
-
-    fileHandler = logging.FileHandler("{}/{}".format(logDirName, logFileName))
-    fileHandler.setFormatter(logFormatter)
-    rootLogger.addHandler(fileHandler)
-
-    # if args.verbose then log to console too
-    if args.verbose:
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setFormatter(logFormatter)
-        rootLogger.addHandler(consoleHandler)
+    logging.basicConfig(level=loglevel,
+                        format="%(asctime)s %(levelname)s: %(message)s",
+                        handlers=[
+                            logging.FileHandler("{}/{}".format(logDirName, logFileName)),
+                            logging.StreamHandler()
+                        ])
 
     logger.debug("Verbose: %s" % args.verbose)
     logger.debug("Repository: %s" % args.repository)
