@@ -17,18 +17,25 @@ try:
     from .dspacedb4 import DSpaceDB4
     from .dspacedb5 import DSpaceDB5
     from .dspacedb6 import DSpaceDB6
+    from .dspacedb7 import DSpaceDB7
+    from .dspacedb5cris import DSpaceDB5Cris
+    from .dspacedb5oracle import DSpaceDB5Oracle
+    from .dspacedb6oracle import DSpaceDB6Oracle
 except Exception: #ImportError
     from dspacedb4 import DSpaceDB4
     from dspacedb5 import DSpaceDB5
     from dspacedb6 import DSpaceDB6
-
+    from dspacedb7 import DSpaceDB7
+    from dspacedb5cris import DSpaceDB5Cris
+    from dspacedb5oracle import DSpaceDB5Oracle
+    from dspacedb6oracle import DSpaceDB6Oracle
 
 SAVE_DIR = os.path.expanduser('~') + "/dspace-stats-collector/var/timestamp"
 DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-stats-collector"
 DEFAULT_COLLECTOR_COMMAND_NAME="dspace-stats-collector"
 DEFAULT_CONFIG_PATH = DEFAULT_INSTALL_PATH + "/config"
 
-SOLR_STATS_CORE_NAME = "statistics"
+DEFAULT_SOLR_STATS_CORE_NAME = "statistics"
 TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
 SOLR_QUERY_ROWS_SIZE = 10
 DEFAULT_OUPUT_LIMIT = 100
@@ -94,9 +101,9 @@ class ConfigurationContext:
 
         # Solr Context
         if commandLineArgs.archived_core != None:
-            self.solrStatsCoreName = SOLR_STATS_CORE_NAME + "-" + commandLineArgs.archived_core
+            self.solrStatsCoreName = self.getSolrStatsCoreName() + "-" + commandLineArgs.archived_core
         else:
-            self.solrStatsCoreName = SOLR_STATS_CORE_NAME
+            self.solrStatsCoreName = self.getSolrStatsCoreName()
 
         self.solrServerURL = self._find_solr_server()
         self.solrStatsCoreURL = self.solrServerURL + "/" + self.solrStatsCoreName
@@ -135,6 +142,14 @@ class ConfigurationContext:
             self.db = DSpaceDB5(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
         elif self.dspaceMajorVersion == '6':
             self.db = DSpaceDB6(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '7':
+            self.db = DSpaceDB7(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '5o':
+            self.db = DSpaceDB5Oracle(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '6o':
+            self.db = DSpaceDB6Oracle(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
+        elif self.dspaceMajorVersion == '5c':
+            self.db = DSpaceDB5Cris(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
         else:
             logger.error('Only implemented values for dspace.majorVersion are 4, 5 and 6. Received {}'.format(self.dspaceMajorVersion))
             raise NotImplementedError
@@ -163,7 +178,10 @@ class ConfigurationContext:
         return int(self.properties['solr.limit'])
     
     def getDspaceMajorVersion(self):
-        return int(self.properties['dspace.majorVersion'])
+        return str(self.properties['dspace.majorVersion'])
+
+    def getSolrStatsCoreName(self):
+        return str( self.properties.get('solr.core', DEFAULT_SOLR_STATS_CORE_NAME) )
 
     ################################################ private methods ##########################################
     def _read_properties(self):
@@ -183,7 +201,9 @@ class ConfigurationContext:
     def _read_dspace_properties(self):
         javaprops = JavaProperties()
 
-        if self.getDspaceMajorVersion() == 6:
+        if self.getDspaceMajorVersion() == '6':
+            
+            ## try to read dspace.cfg
             try:
                 propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
                 javaprops.load(open(propertiesFilename))
@@ -193,6 +213,7 @@ class ConfigurationContext:
                 logger.exception("Error while trying to read properties file %s" % propertiesFilename)
                 raise
 
+            ## try to read local.cfg
             try:
                 propertiesFilename = "%s/config/local.cfg" % (self.properties["dspace.dir"])
                 javaprops.load(open(propertiesFilename))
@@ -201,6 +222,16 @@ class ConfigurationContext:
             except (FileNotFoundError, UnboundLocalError):
                 logger.debug("Could not read property file %s" % propertiesFilename)
                 pass
+
+        elif self.getDspaceMajorVersion() == '5c':
+            try:
+                propertiesFilename = "%s/build.properties" % (self.properties["dspace.dir"])
+                javaprops.load(open(propertiesFilename))
+                property_dict = javaprops.get_property_dict()
+                logger.debug("Read succesfully property file %s" % propertiesFilename)
+            except (FileNotFoundError, UnboundLocalError):
+                logger.exception("Error while trying to read properties file %s" % propertiesFilename)
+                raise
 
         else:
             try:

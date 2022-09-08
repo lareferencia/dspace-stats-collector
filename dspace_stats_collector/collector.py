@@ -88,6 +88,9 @@ def run():
         loglevel = logging.DEBUG
     else:
         loglevel = logging.INFO
+
+    if args.debug:
+        loglevel = logging.DEBUG
     
     logDirName = os.path.expanduser('~') + "/dspace-stats-collector/var/logs"
     if not os.path.exists(logDirName):
@@ -98,10 +101,16 @@ def run():
     else:
         logFileName = "dspace-stats-collector.log"
     
+    logging_handlers = [ logging.FileHandler("{}/{}".format(logDirName, logFileName), 'w+') ]
+
+    # if we are in verbose mode, also log to console
+    if args.verbose:
+        logging_handlers.append(logging.StreamHandler())
+
+
     logging.basicConfig(level=loglevel,
-                    format="%(levelname)s: %(message)s",
-                    filename="{}/{}".format(logDirName, logFileName),
-                    filemode='a')
+                        format="%(asctime)s %(levelname)s: %(message)s",
+                        handlers=logging_handlers)
 
     logger.debug("Verbose: %s" % args.verbose)
     logger.debug("Repository: %s" % args.repository)
@@ -173,6 +182,11 @@ def parse_args():
                         help="increase output verbosity",
                         default=False,
                         action="store_true")
+    parser.add_argument("--debug",
+                        help="debug mode",
+                        default=False,
+                        action="store_true")
+    
     parser.add_argument("-a",
                         "--archived_core",
                         metavar="YYYY",

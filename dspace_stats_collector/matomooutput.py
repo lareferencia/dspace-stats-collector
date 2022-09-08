@@ -37,8 +37,13 @@ class MatomoFilter:
             self._handleCanonicalPrefix = dspaceProperties['handle.canonical.prefix']
         else:
             self._handleCanonicalPrefix = 'http://hdl.handle.net/'
-        self._dspaceHostname = dspaceProperties['dspace.hostname']
-        self._dspaceUrl = dspaceProperties['dspace.url']
+            
+        if configContext.getDspaceMajorVersion() == '7':
+            self._dspaceHostname = dspaceProperties['dspace.server.url']
+            self._dspaceUrl = dspaceProperties['dspace.ui.url']
+        else:
+            self._dspaceHostname = dspaceProperties['dspace.hostname']
+            self._dspaceUrl = dspaceProperties['dspace.url']
 
         self._repoProperties = configContext.properties
 
@@ -122,6 +127,8 @@ class MatomoBufferedSender:
 
     def send(self, event):
         self._buffer.append((event._matomoRequest, event.is_robot, event._src['time']))
+        logger.debug( "Event json dump: {}".format( event.toJSON() ) )
+        
         #print(self._buffer)
         if self.isBufferFull():
             logger.debug("Buffer is full")
@@ -193,7 +200,9 @@ class MatomoBufferedSender:
                         raise 
                     
                     except MatomoInternalServerException as e: # if there is some internal error will discard this event and log the result
-                        logger.error('Matomo internal error occurred: {} with event. This event will be discarded.\n'.format( str(e)) )            
+                        logger.error('Matomo internal error occurred: {} with event. This event will be discarded.\n'.format( str(e)) )    
+                        logger.debug('Request URL was: {}'.format(self._url) )        
+                        logger.debug('Request Payload was: {}'.format(m) )        
 
 
 

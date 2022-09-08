@@ -10,7 +10,7 @@ try:
 except Exception: #ImportError
     from dspacedb import DSpaceDB
 
-class DSpaceDB6(DSpaceDB):
+class DSpaceDB6Oracle(DSpaceDB):
 
     def __init__(self, jdbcUrl, username, password):
 
