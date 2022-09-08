@@ -127,7 +127,7 @@ class MatomoBufferedSender:
 
     def send(self, event):
         self._buffer.append((event._matomoRequest, event.is_robot, event._src['time']))
-        logger.debug( "Event json dump: {}".format( str(json.dumps(event)) ) )
+        logger.debug( "Event json dump: {}".format( event.toJSON() ) )
         
         #print(self._buffer)
         if self.isBufferFull():
