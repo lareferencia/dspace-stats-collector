@@ -17,7 +17,7 @@ psycopg2-binary==2.8
 cx-Oracle
 pysolr==3.8.1
 pandas==1.2
-urllib3==1.24.2
+urllib3==1.26.5
 pytz==2018.7
 python-crontab
 anonymizeip
