@@ -34,7 +34,7 @@ echo "Installing binary dependecies in conda sandbox"
 $INSTALL_PATH/bib/conda install -c eumetsat oracle-instantclient
 
 echo "Installing dspace-stats-collector package dependencies"
-curl https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/requirements-p37.txt -o requirements.txt
+curl https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/requirements-p37-oracle.txt -o requirements.txt
 $INSTALL_PATH/bin/pip install -r requirements.txt
 
 echo "Installing dspace-stats-collector package"
