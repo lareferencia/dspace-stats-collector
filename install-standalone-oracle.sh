@@ -30,9 +30,6 @@ rm delete_this_file.sh
 
 cd $INSTALL_PATH
 
-echo "Installing binary dependecies in conda sandbox"
-$INSTALL_PATH/bin/conda install -y -c eumetsat oracle-instantclient
-
 echo "Installing dspace-stats-collector package dependencies"
 curl https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/requirements-p37-oracle.txt -o requirements.txt
 $INSTALL_PATH/bin/pip install -r requirements.txt
@@ -43,5 +40,6 @@ $INSTALL_PATH/bin/pip install dspace-stats-collector
 echo "Installing config files"
 $INSTALL_PATH/bin/dspace-stats-configure
 
-
+echo "Installing oracle binary dependecies in conda sandbox"
+$INSTALL_PATH/bin/conda install -y -c eumetsat oracle-instantclient
 
