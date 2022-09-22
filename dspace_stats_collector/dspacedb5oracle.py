@@ -36,7 +36,7 @@ class DSpaceDB5Oracle(DSpaceDB):
                 AND b.deleted = FALSE
                 AND mv2.metadata_field_id = {dcTitleId}
                 AND mv2.resource_type_id=2
-                AND mv.resource_id = {bitstreamId};
+                AND mv.resource_id = {bitstreamId}
         """
 
         self._queryItemSQL = """
@@ -52,7 +52,7 @@ class DSpaceDB5Oracle(DSpaceDB):
             WHERE metadata_field_id = {dcTitleId}
                 AND mv.resource_type_id=2
                 AND h.resource_type_id=2
-                AND mv.resource_id = {itemId};
+                AND mv.resource_id = {itemId}
         """
 
         self._queryTitleSQL = """
@@ -62,7 +62,7 @@ class DSpaceDB5Oracle(DSpaceDB):
              WHERE mfr.metadata_schema_id = msr.metadata_schema_id
                AND short_id = 'dc'
                AND element = 'title'
-               AND qualifier IS NULL;
+               AND qualifier IS NULL
         """
 
         self._dcTitleId = self.getDcTitleId()
