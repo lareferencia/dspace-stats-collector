@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-
+export PIP_DEFAULT_TIMEOUT=100
 INSTALL_PATH=$HOME/dspace-stats-collector
 MINICONDA_URL_PREFIX='https://repo.anaconda.com/miniconda/'
 
