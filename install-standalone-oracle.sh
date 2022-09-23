@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-
+export PIP_DEFAULT_TIMEOUT=100
 INSTALL_PATH=$HOME/dspace-stats-collector
 MINICONDA_URL_PREFIX='https://repo.anaconda.com/miniconda/'
 
@@ -35,7 +35,7 @@ curl https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/maste
 $INSTALL_PATH/bin/pip install -r requirements.txt
 
 echo "Installing dspace-stats-collector package"
-$INSTALL_PATH/bin/pip install dspace-stats-collector
+$INSTALL_PATH/bin/pip install --no-cache-dir dspace-stats-collector
 
 echo "Installing config files"
 $INSTALL_PATH/bin/dspace-stats-configure

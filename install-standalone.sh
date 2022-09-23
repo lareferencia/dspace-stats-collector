@@ -33,7 +33,7 @@ wget https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/maste
 $INSTALL_PATH/bin/pip install -r requirements.txt
 
 echo "Installing dspace-stats-collector package"
-$INSTALL_PATH/bin/pip install dspace-stats-collector
+$INSTALL_PATH/bin/pip install--no-cache-dir dspace-stats-collector
 
 echo "Installing config files"
 $INSTALL_PATH/bin/dspace-stats-configure
