@@ -126,7 +126,11 @@ def run():
     #for repoName in args.repositories:
     repoName=args.repository
 
-    configContext = ConfigurationContext(repoName, args)    
+    try:
+        configContext = ConfigurationContext(repoName, args)    
+    except Exception as e:
+        logger.error("Error while loading configuration: %s" % e)
+        sys.exit(1)
 
     if args.date_from:
         logger.debug("Start processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.date_from.strftime("%Y-%m-%d")))

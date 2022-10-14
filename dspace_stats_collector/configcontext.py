@@ -278,7 +278,7 @@ class ConfigurationContext:
             logger.debug("Solr Server found at %s provided by:%s" % (solrServerURL, source))
         else:
             logger.exception("Solr Server not found in search path: %s" % search_paths)
-            raise Exception("Solr Server not found in search path: %s" % search_paths)
+            raise RuntimeError("Solr Server not found in search path: %s" % search_paths)
 
         # Test Connection
         try:
@@ -290,7 +290,7 @@ class ConfigurationContext:
 
         if status != "OK":
             logger.error("Solr Statistics Core Not Ready")
-            raise RuntimeError
+            raise RuntimeError("Solr Statistics Core Not Ready")
         else: # issue a core commit command, wait until completion
             url = solrServerURL + "/" + self.solrStatsCoreName + "/update?commit=true"
             try:
