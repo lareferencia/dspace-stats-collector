@@ -34,6 +34,7 @@ SAVE_DIR = os.path.expanduser('~') + "/dspace-stats-collector/var/timestamp"
 DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-stats-collector"
 DEFAULT_COLLECTOR_COMMAND_NAME="dspace-stats-collector"
 DEFAULT_CONFIG_PATH = DEFAULT_INSTALL_PATH + "/config"
+DEFAULT_SOLR_SERVER = "http://localhost:8080/solr"
 
 DEFAULT_SOLR_STATS_CORE_NAME = "statistics"
 TIMESTAMP_PATTERN = "%Y-%m-%dT00:00:00.000Z"
@@ -250,26 +251,33 @@ class ConfigurationContext:
         # Find server
         solrServerURL = None
         response = None
-        search_path = [
-            self.properties['solr.server'] if 'solr.server' in self.properties.keys() else None,
-            self.dspaceProperties['solr.server'] if 'solr.server' in self.dspaceProperties.keys() else None
-            ]
-        for path in search_path:
+        
+        # Try to find solr server first in dspace config, then in collection config, then in default value
+        search_paths = []
+        search_paths.append( ('dspace config', self.dspaceProperties.get('solr.server')) )
+        search_paths.append( ('collector config', self.properties.get('solr.server')) )
+        search_paths.append( ('defaul value',  DEFAULT_SOLR_SERVER) )
+
+        for (source, path) in search_paths:
             if path is None:
+                logger.debug("No solr server found in %s" % source)
                 continue
-            url = path + "/" + self.solrStatsCoreName + "/admin/ping?wt=json"
-            try:
-                response = requests.get(url)
-                if response.status_code == 200:
-                    solrServerURL = path
-                    break
-            except:
-                pass
+            else:
+                url = path + "/" + self.solrStatsCoreName + "/admin/ping?wt=json"
+                try:
+                    response = requests.get(url)
+                    if response.status_code == 200:
+                        solrServerURL = path
+                        logger.debug("Found solr server in %s: %s" % (source, solrServerURL))
+                        break
+                except:
+                    logger.debug("Error while trying to connect to solr server %s provided by: " % (url, source))
+                    pass
 
         if solrServerURL is not None:
-            logger.debug("Solr Server found at %s" % solrServerURL)
+            logger.debug("Solr Server found at %s provided by:" % (solrServerURL, source))
         else:
-            logger.exception("Solr Server not found in search path: %s" % search_path)
+            logger.exception("Solr Server not found in search path: %s" % search_paths)
             raise
 
         # Test Connection
