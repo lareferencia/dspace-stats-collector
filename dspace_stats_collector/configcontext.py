@@ -271,11 +271,11 @@ class ConfigurationContext:
                         logger.debug("Found solr server in %s: %s" % (source, solrServerURL))
                         break
                 except:
-                    logger.debug("Error while trying to connect to solr server %s provided by: " % (url, source))
+                    logger.debug("Error while trying to connect to solr server %s provided by: %s" % (url, source))
                     pass
 
         if solrServerURL is not None:
-            logger.debug("Solr Server found at %s provided by:" % (solrServerURL, source))
+            logger.debug("Solr Server found at %s provided by:%s" % (solrServerURL, source))
         else:
             logger.exception("Solr Server not found in search path: %s" % search_paths)
             raise
