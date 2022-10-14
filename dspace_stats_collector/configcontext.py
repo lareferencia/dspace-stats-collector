@@ -277,7 +277,6 @@ class ConfigurationContext:
         if solrServerURL is not None:
             logger.debug("Solr Server found at %s provided by:%s" % (solrServerURL, source))
         else:
-            logger.exception("Solr Server not found in search path: %s" % search_paths)
             raise RuntimeError("Solr Server not found in search path: %s" % search_paths)
 
         # Test Connection
