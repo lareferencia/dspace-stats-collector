@@ -86,9 +86,11 @@ class SolrTimestampCursor(object):
                 # or if untilDate was originally set, then we are done ignoring the look ahead process
                 done = (retryToLookAhead > self.maxDaysToLookForEvents) or (untilDate is not None) 
 
+            
                 # finally we consider an special case, if the lastGoodFromTimestamp + retyToLookAhead is greater than present moment then we are done
-                try: 
-                    parsedate = datetime.datetime.strptime(str(lastGoodFromTimestamp), '%Y-%m-%d')
+                try:
+                    # example 2022-10-17T08:36:03.879Z
+                    parsedate = datetime.datetime.strptime(str(lastGoodFromTimestamp), '%Y-%m-%dT%H:%M:%S.%fZ')
                     parsedate = parsedate + datetime.timedelta(days=retryToLookAhead)   
                     done = done or ( parsedate > datetime.datetime.now() )
                     if done:
