@@ -65,10 +65,12 @@ class SolrTimestampCursor(object):
                 retryToLookAhead = 0
                 yield docs
             else:
+                # we store the original fromTimestamp
+                oldFromTimestamp = fromTimestamp
                 # if we did not found any documents, then we need to increase the number of days to look ahead
                 retryToLookAhead += 1
                 # we move the fromTimestamp adding n+1 days where n are the days we have looked ahead so far (was incremented by 1 in the last line) 
-                fromTimestamp = fromTimestamp + ('+%sDAYS' % retryToLookAhead)
+                fromTimestamp = oldFromTimestamp + ('+%sDAYS' % retryToLookAhead)
                 # note that toTimeStamp will be fromTimestamp + retryToLookAhead + 1 ( keeping the one day window)
         
                 # if the retryToLookAhead is reached the maxDaysToLoolForEvent, then we are done
