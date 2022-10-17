@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 """ SOLR pipeline components """
 
+from email.utils import parsedate
 import logging
 import re
 logger = logging.getLogger()
+
+import datetime
 
 import json
 import pysolr
@@ -78,11 +81,25 @@ class SolrTimestampCursor(object):
                 # we move the fromTimestamp adding n+1 days where n are the days we have looked ahead so far (was incremented by 1 in the last line) 
                 fromTimestamp = fromTimestamp + ('+%sDAYS' % retryToLookAhead)
                 # note that toTimeStamp will be fromTimestamp + retryToLookAhead + 1 ( keeping the one day window)
-        
+
                 # if the retryToLookAhead is reached the maxDaysToLoolForEvent, then we are done
                 # or if untilDate was originally set, then we are done ignoring the look ahead process
                 done = (retryToLookAhead > self.maxDaysToLookForEvents) or (untilDate is not None) 
 
+                # finally we consider an special case, if the lastGoodFromTimestamp + retyToLookAhead is greater than present moment then we are done
+                try: 
+                    parsedate = datetime.datetime.strptime(lastGoodFromTimestamp, '%Y-%m-%dT%H:%M:%SZ')
+                    parsedate = parsedate + datetime.timedelta(days=retryToLookAhead)   
+                    done = done or (parsedate is not None and parsedate > datetime.datetime.now() )
+                    if done:
+                        logger.debug('SOLR Query look ahead process has reached the present moment, no events found!!! we are done')
+                except ValueError as e: # if the date is not valid, then we ignore this error and continue
+                    logger.error('Error parsing datestamp %s during solr query process - Something is wrong with lastTimestamp store' % lastGoodFromTimestamp)
+
+
+
+        
+       
     def _query_solr(self, fromTimestamp, toTimeStamp, rows):
         
         # copy the query and add the time range
