@@ -31,7 +31,12 @@ class SolrTimestampCursor(object):
 
         docs_retrieved = 0
         done = False
+
+        # this will hold the working from timestamp 
         fromTimestamp = initialTimestamp
+
+        # this will hold the last timestamp we have successfully retrieved and processed
+        lastGoodFromTimestamp = initialTimestamp
     
         # this counts the number of days we have looked ahead if the initial query does not return any results
         retryToLookAhead = 0
@@ -61,16 +66,17 @@ class SolrTimestampCursor(object):
             # and we need to reset the retryToLookAhead counter, then we yield the documents
             if numDocs > 0:
                 docs_retrieved += numDocs
-                fromTimestamp = docs[-1]['time']
+                lastGoodFromTimestamp = docs[-1]['time'] # update the lastGoodFromTimestamp to the timestamp of the last document
+                fromTimestamp = lastGoodFromTimestamp # update the fromTimestamp to the lastGoodFromTimestamp
                 retryToLookAhead = 0
                 yield docs
-            else:
-                # we store the original fromTimestamp
-                oldFromTimestamp = fromTimestamp
-                # if we did not found any documents, then we need to increase the number of days to look ahead
+            else: # if we did not found any documents
+                # we restore the last good fromTimestamp, because if we moved forward in time without succes we need restore the last good timestamp in order to avoid cumulative day offsets
+                fromTimestamp = lastGoodFromTimestamp
+                # , then we need to increase the number of days to look ahead
                 retryToLookAhead += 1
                 # we move the fromTimestamp adding n+1 days where n are the days we have looked ahead so far (was incremented by 1 in the last line) 
-                fromTimestamp = oldFromTimestamp + ('+%sDAYS' % retryToLookAhead)
+                fromTimestamp = fromTimestamp + ('+%sDAYS' % retryToLookAhead)
                 # note that toTimeStamp will be fromTimestamp + retryToLookAhead + 1 ( keeping the one day window)
         
                 # if the retryToLookAhead is reached the maxDaysToLoolForEvent, then we are done
