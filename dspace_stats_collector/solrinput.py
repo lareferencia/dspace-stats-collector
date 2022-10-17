@@ -92,9 +92,11 @@ class SolrTimestampCursor(object):
                     # example 2022-10-17T08:36:03.879Z
                     parsedate = datetime.datetime.strptime(str(lastGoodFromTimestamp), '%Y-%m-%dT%H:%M:%S.%fZ')
                     parsedate = parsedate + datetime.timedelta(days=retryToLookAhead)   
-                    done = done or ( parsedate > datetime.datetime.now() )
-                    if done:
+                    
+                    if parsedate > datetime.datetime.now(): 
                         logger.debug('SOLR Query look ahead process has reached the present moment, no events found!!! we are done')
+                        done = True
+                        
                 except ValueError as e: # if the date is not valid, then we ignore this error and continue
                     logger.error('Error parsing datestamp %s during solr query process - Something is wrong with lastTimestamp store' % lastGoodFromTimestamp)
 
