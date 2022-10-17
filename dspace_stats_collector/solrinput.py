@@ -88,7 +88,7 @@ class SolrTimestampCursor(object):
 
                 # finally we consider an special case, if the lastGoodFromTimestamp + retyToLookAhead is greater than present moment then we are done
                 try: 
-                    parsedate = datetime.datetime.strptime(lastGoodFromTimestamp, '%Y-%m-%d')
+                    parsedate = datetime.datetime.strptime(str(lastGoodFromTimestamp), '%Y-%m-%d')
                     parsedate = parsedate + datetime.timedelta(days=retryToLookAhead)   
                     done = done or ( parsedate > datetime.datetime.now() )
                     if done:
