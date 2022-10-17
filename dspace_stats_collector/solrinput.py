@@ -90,7 +90,7 @@ class SolrTimestampCursor(object):
                 try: 
                     parsedate = datetime.datetime.strptime(lastGoodFromTimestamp, '%Y-%m-%d')
                     parsedate = parsedate + datetime.timedelta(days=retryToLookAhead)   
-                    done = done or (parsedate is not None and parsedate > datetime.datetime.now() )
+                    done = done or ( parsedate > datetime.datetime.now() )
                     if done:
                         logger.debug('SOLR Query look ahead process has reached the present moment, no events found!!! we are done')
                 except ValueError as e: # if the date is not valid, then we ignore this error and continue
