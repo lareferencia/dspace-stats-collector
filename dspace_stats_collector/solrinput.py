@@ -81,7 +81,7 @@ class SolrTimestampCursor(object):
         
                 # if the retryToLookAhead is reached the maxDaysToLoolForEvent, then we are done
                 # or if untilDate was originally set, then we are done ignoring the look ahead process
-                done = (retryToLookAhead >= self.maxDaysToLookForEvents) or (untilDate is not None) 
+                done = (retryToLookAhead > self.maxDaysToLookForEvents) or (untilDate is not None) 
 
     def _query_solr(self, fromTimestamp, toTimeStamp, rows):
         
