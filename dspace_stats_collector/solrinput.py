@@ -84,7 +84,7 @@ class SolrTimestampCursor(object):
 
                 # if the retryToLookAhead is reached the maxDaysToLoolForEvent, then we are done
                 # or if untilDate was originally set, then we are done ignoring the look ahead process
-                done = (retryToLookAhead > self.maxDaysToLookForEvents) or (untilDate is not None) 
+                done = (retryToLookAhead > self.maxDaysToLookForEvents) or (untilDate is not None) or (docs_retrieved >= limit)
 
             
                 # finally we consider an special case, if the lastGoodFromTimestamp + retyToLookAhead is greater than present moment then we are done
