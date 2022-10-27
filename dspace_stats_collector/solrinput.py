@@ -137,7 +137,7 @@ class SolrStatisticsInput:
             'sort': 'time asc',
             'start': 0,
             'wt': 'json',
-            'fq': '+statistics_type:"view" +type:(0 OR 2)',
+            'fq': '+statistics_type:"view" +type:(0 OR 2) +isBot:false',
             'fl': 'id,ip,owningItem,referrer,time,type,userAgent'
         })
         
