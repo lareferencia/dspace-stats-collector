@@ -202,7 +202,7 @@ class ConfigurationContext:
     def _read_dspace_properties(self):
         javaprops = JavaProperties()
 
-        if self.getDspaceMajorVersion() == '6':
+        if self.getDspaceMajorVersion().startswith('6') or self.getDspaceMajorVersion().startswith('7'):
             
             ## try to read dspace.cfg
             try:
