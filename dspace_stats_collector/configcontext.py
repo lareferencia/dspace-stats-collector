@@ -161,10 +161,6 @@ class ConfigurationContext:
     def getPropertiesFieldPath(config_dir, repoName):
         return "%s/%s.properties" % (config_dir, repoName)
 
-    def close(self):
-        logger.debug("Closing resources")
-        self.db.close()
-
     ############################################### public methods   ###########################################
     def getMatomoOutputSize(self):
         return int(self.properties['matomo.batchSize'])
@@ -183,6 +179,17 @@ class ConfigurationContext:
 
     def getSolrStatsCoreName(self):
         return str( self.properties.get('solr.core', DEFAULT_SOLR_STATS_CORE_NAME) )
+
+    def close(self):
+
+        logger.debug("Closing resources")
+       
+        ## close db connection
+        self.db.close()
+
+        ## commit solr 
+        self._commit_solr()
+        
 
     ################################################ private methods ##########################################
     def _read_properties(self):
@@ -291,14 +298,24 @@ class ConfigurationContext:
             logger.error("Solr Statistics Core Not Ready")
             raise RuntimeError("Solr Statistics Core Not Ready")
         else: # issue a core commit command, wait until completion
-            url = solrServerURL + "/" + self.solrStatsCoreName + "/update?commit=true"
-            try:
-                logger.debug("Solr :: Committing changes in %s core" % self.solrStatsCoreName)
-                response = requests.get(url)
-            except:
-                logger.error("Commit to Solr server failed")
+            # url = solrServerURL + "/" + self.solrStatsCoreName + "/update?commit=true"
+            # try:
+            #     logger.debug("Solr :: Committing changes in %s core" % self.solrStatsCoreName)
+            #     response = requests.get(url)
+            # except:
+            #     logger.error("Commit to Solr server failed")
+            pass
 
         return solrServerURL
+
+
+    def _commit_solr(self):
+        url = self.solrServerURL + "/" + self.solrStatsCoreName + "/update?commit=true"
+        try:
+            logger.debug("Solr :: commit %s core" % self.solrStatsCoreName)
+            response = requests.get(url)
+        except:
+            logger.error("Commit to Solr server failed")
     
 
     

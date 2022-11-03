@@ -123,7 +123,6 @@ def run():
     if args.date_until:
         logger.debug("Date until: %s" % args.date_until.strftime("%Y-%m-%d"))
 
-    #for repoName in args.repositories:
     repoName=args.repository
 
     try:
