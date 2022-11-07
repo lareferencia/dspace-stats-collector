@@ -31,9 +31,15 @@ class SimpleHashSessionFilter:
                        }
             event._sess = sessDict
 
-            # Anonymize IP
-            if self._anonymize_ip_mask != self.FULL_IP_MASK:     
-                event._src['ip'] = anonymize_ip(event._src.get('ip','0.0.0.0'), self._anonymize_ip_mask)    
+
+            try:
+                # Anonymize IP
+                if self._anonymize_ip_mask != self.FULL_IP_MASK:     
+                    event._src['ip'] = anonymize_ip(event._src.get('ip','0.0.0.0'), self._anonymize_ip_mask)    
+            
+            except Exception as e:
+                logger.error("Error anonymizing IP: {}".format(e))
+                event._src['ip'] = '0.0.0.0'
 
             logger.debug('SESSION_FILTER:: Event: {} Session string: {}'.format(event._id, srcString))
 
