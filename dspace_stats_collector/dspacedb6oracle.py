@@ -20,7 +20,7 @@ class DSpaceDB6Oracle(DSpaceDB):
             SELECT mv.dspace_object_id::text AS id,
                     mv2.text_value AS record_title,
                     h.handle AS handle,
-                    true AS is_download,
+                    1 AS is_download,
                     i.item_id::text AS owning_item,
                     b.sequence_id AS sequence_id,
                     mv.text_value AS filename
@@ -32,7 +32,7 @@ class DSpaceDB6Oracle(DSpaceDB):
             RIGHT JOIN metadatavalue mv2 ON mv2.dspace_object_id = i.item_id
             WHERE mv.metadata_field_id = {dcTitleId}
                 AND b.sequence_id IS NOT NULL
-                AND b.deleted = FALSE
+                AND b.deleted = 0
                 AND mv2.metadata_field_id = {dcTitleId}
                 AND mv.dspace_object_id = uuid('{bitstreamId}')
         """
@@ -41,7 +41,7 @@ class DSpaceDB6Oracle(DSpaceDB):
             SELECT mv.dspace_object_id::text AS id,
                     mv.text_value AS record_title,
                     h.handle AS handle,
-                    false AS is_download,
+                    0 AS is_download,
                     NULL AS owning_item,
                     NULL AS sequence_id,
                     NULL AS filename
