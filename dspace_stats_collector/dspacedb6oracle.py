@@ -24,12 +24,12 @@ class DSpaceDB6Oracle(DSpaceDB):
                     i.item_id::text AS owning_item,
                     b.sequence_id AS sequence_id,
                     mv.text_value AS filename
-            FROM metadatavalue AS mv
-            RIGHT JOIN bitstream AS b ON mv.dspace_object_id = b.uuid
-            RIGHT JOIN bundle2bitstream AS bb ON b.uuid = bb.bitstream_id
-            RIGHT JOIN item2bundle AS i ON i.bundle_id = bb.bundle_id
-            RIGHT JOIN handle AS h ON h.resource_id = i.item_id
-            RIGHT JOIN metadatavalue AS mv2 ON mv2.dspace_object_id = i.item_id
+            FROM metadatavalue mv
+            RIGHT JOIN bitstream b ON mv.dspace_object_id = b.uuid
+            RIGHT JOIN bundle2bitstream bb ON b.uuid = bb.bitstream_id
+            RIGHT JOIN item2bundle i ON i.bundle_id = bb.bundle_id
+            RIGHT JOIN handle h ON h.resource_id = i.item_id
+            RIGHT JOIN metadatavalue mv2 ON mv2.dspace_object_id = i.item_id
             WHERE mv.metadata_field_id = {dcTitleId}
                 AND b.sequence_id IS NOT NULL
                 AND b.deleted = FALSE
@@ -45,8 +45,8 @@ class DSpaceDB6Oracle(DSpaceDB):
                     NULL AS owning_item,
                     NULL AS sequence_id,
                     NULL AS filename
-            FROM metadatavalue AS mv
-            RIGHT JOIN handle AS h ON h.resource_id = mv.dspace_object_id
+            FROM metadatavalue mv
+            RIGHT JOIN handle h ON h.resource_id = mv.dspace_object_id
             WHERE metadata_field_id = {dcTitleId}
                 AND h.resource_type_id=2
                 AND mv.dspace_object_id = uuid('{itemId}')
