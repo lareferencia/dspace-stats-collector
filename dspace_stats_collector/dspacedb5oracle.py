@@ -24,12 +24,12 @@ class DSpaceDB5Oracle(DSpaceDB):
                     i.item_id AS owning_item,
                     b.sequence_id AS sequence_id,
                     mv.text_value AS filename
-            FROM metadatavalue AS mv
-            RIGHT JOIN bitstream AS b ON mv.resource_id = b.bitstream_id
-            RIGHT JOIN bundle2bitstream AS bb ON b.bitstream_id = bb.bitstream_id
-            RIGHT JOIN item2bundle AS i ON i.bundle_id = bb.bundle_id
-            RIGHT JOIN handle AS h ON h.resource_id = i.item_id
-            RIGHT JOIN metadatavalue AS mv2 ON mv2.resource_id = i.item_id
+            FROM metadatavalue mv
+            RIGHT JOIN bitstream b ON mv.resource_id = b.bitstream_id
+            RIGHT JOIN bundle2bitstream bb ON b.bitstream_id = bb.bitstream_id
+            RIGHT JOIN item2bundle i ON i.bundle_id = bb.bundle_id
+            RIGHT JOIN handle h ON h.resource_id = i.item_id
+            RIGHT JOIN metadatavalue mv2 ON mv2.resource_id = i.item_id
             WHERE mv.metadata_field_id = {dcTitleId}
                 AND mv.resource_type_id = 0
                 AND b.sequence_id IS NOT NULL
@@ -47,8 +47,8 @@ class DSpaceDB5Oracle(DSpaceDB):
                     NULL AS owning_item,
                     NULL AS sequence_id,
                     NULL AS filename
-            FROM metadatavalue AS mv
-            RIGHT JOIN handle AS h ON h.resource_id = mv.resource_id
+            FROM metadatavalue mv
+            RIGHT JOIN handle h ON h.resource_id = mv.resource_id
             WHERE metadata_field_id = {dcTitleId}
                 AND mv.resource_type_id=2
                 AND h.resource_type_id=2
