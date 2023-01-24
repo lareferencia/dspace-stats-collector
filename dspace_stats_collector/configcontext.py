@@ -188,7 +188,7 @@ class ConfigurationContext:
         self.db.close()
 
         ## commit solr 
-        self._commit_solr()
+        ## self._commit_solr()
         
 
     ################################################ private methods ##########################################
