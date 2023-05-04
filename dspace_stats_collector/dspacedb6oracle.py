@@ -17,11 +17,11 @@ class DSpaceDB6Oracle(DSpaceDB):
         DSpaceDB.__init__(self,jdbcUrl, username, password)
 
         self._queryDownloadSQL = """
-            SELECT mv.dspace_object_id::text AS id,
+            SELECT regexp_replace(lower(mv.dspace_object_id), '(........)(....)(....)(....)(.*)', '\\1-\\2-\\3-\\4-\\5') AS id,            
                     mv2.text_value AS record_title,
                     h.handle AS handle,
                     1 AS is_download,
-                    i.item_id::text AS owning_item,
+                    regexp_replace(lower(i.item_id), '(........)(....)(....)(....)(.*)', '\\1-\\2-\\3-\\4-\\5') AS owning_item,                    
                     b.sequence_id AS sequence_id,
                     mv.text_value AS filename
             FROM metadatavalue mv
@@ -34,11 +34,11 @@ class DSpaceDB6Oracle(DSpaceDB):
                 AND b.sequence_id IS NOT NULL
                 AND b.deleted = 0
                 AND mv2.metadata_field_id = {dcTitleId}
-                AND mv.dspace_object_id = uuid('{bitstreamId}')
+                AND mv.dspace_object_id = upper(replace('{bitstreamId}','-',''))
         """
 
         self._queryItemSQL = """
-            SELECT mv.dspace_object_id::text AS id,
+            SELECT regexp_replace(lower(mv.dspace_object_id), '(........)(....)(....)(....)(.*)', '\\1-\\2-\\3-\\4-\\5') AS id,            
                     mv.text_value AS record_title,
                     h.handle AS handle,
                     0 AS is_download,
@@ -49,7 +49,7 @@ class DSpaceDB6Oracle(DSpaceDB):
             RIGHT JOIN handle h ON h.resource_id = mv.dspace_object_id
             WHERE metadata_field_id = {dcTitleId}
                 AND h.resource_type_id=2
-                AND mv.dspace_object_id = uuid('{itemId}')
+                AND mv.dspace_object_id = upper(replace('{itemId}','-',''))
         """
       
         self._queryTitleSQL = """
