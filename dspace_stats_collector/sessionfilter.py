@@ -8,6 +8,7 @@ logger = logging.getLogger()
 from dateutil import parser as dateutil_parser
 from hashlib import md5
 from anonymizeip import anonymize_ip
+from ipaddress import ip_address
 
 
 class SimpleHashSessionFilter:
@@ -38,8 +39,26 @@ class SimpleHashSessionFilter:
                     event._src['ip'] = anonymize_ip(event._src.get('ip','0.0.0.0'), self._anonymize_ip_mask)    
             
             except Exception as e:
-                logger.error("Error anonymizing IP: {}".format(e))
-                event._src['ip'] = '0.0.0.0'
+
+                 # check if ip is folowing the format ip:port
+                if ':' in event._src.get('ip','0.0.0.0'):
+                    ip, port = ip.split(':')
+                    
+                    ## check the ip string is a valid ip address
+                    try:
+                        # this will raise a ValueError if the ip is not valid
+                        ip_address(ip)
+
+                        # anonymize ip
+                        event._src['ip'] = anonymize_ip(ip, self._anonymize_ip_mask)
+
+                    except ValueError:
+                        logger.error("Error anonymizing parsed IP from XXXX:port pattern: {}".format(e))         
+                        event._src['ip'] = '0.0.0.0'
+                        
+                else:
+                    logger.error("Error anonymizing IP: {}".format(e))
+                    event._src['ip'] = '0.0.0.0'
 
             logger.debug('SESSION_FILTER:: Event: {} Session string: {}'.format(event._id, srcString))
 
