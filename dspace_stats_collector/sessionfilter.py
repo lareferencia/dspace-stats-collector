@@ -42,7 +42,13 @@ class SimpleHashSessionFilter:
 
                  # check if ip is folowing the format ip:port
                 if ':' in event._src.get('ip','0.0.0.0'):
-                    ip, port = event._src.get('ip','0.0.0.0').split(':')
+
+                    splited = event._src.get('ip','0.0.0.0').split(':')
+
+                    if len(splited) > 1:
+                        ip = splited[0]
+                    else:
+                        ip = '0.0.0.0'
                     
                     ## check the ip string is a valid ip address
                     try:
