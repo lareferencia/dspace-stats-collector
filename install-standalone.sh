@@ -4,14 +4,23 @@
 INSTALL_PATH=$HOME/dspace-stats-collector
 MINICONDA_URL_PREFIX='https://repo.anaconda.com/miniconda/'
 
+Miniconda3-py39_24.4.0-0-Linux-x86_64.sh
+
 MACHINE_TYPE=`uname -m`
 if [ ${MACHINE_TYPE} == 'x86_64' ]; then
   # 64-bit stuff here
-  MINICONDA_FILE='Miniconda3-latest-Linux-x86_64.sh'
-else
+  MINICONDA_FILE='Miniconda3-py39_24.4.0-0-Linux-x86_64.sh'
+elif
   # 32-bit stuff here
-  MINICONDA_FILE='Miniconda3-latest-Linux-x86.sh'
+  MINICONDA_FILE='Miniconda3-py39_24.4.0-0-Linux-x86.sh'
+elif [ ${MACHINE_TYPE} == 'aarch64' ]; then
+  # ARM stuff here (EXPERIMENTAL)
+  MINICONDA_FILE='Miniconda3-py39_24.4.0-0-Linux-aarch64.sh'
+else
+  echo "Unknown machine type: ${MACHINE_TYPE}"
+  exit 1
 fi
+
 
 MINICONDA_URL=$MINICONDA_URL_PREFIX$MINICONDA_FILE
 
