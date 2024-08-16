@@ -145,7 +145,11 @@ class MatomoBufferedSender:
 
         try:            
             if len(request_list) > 0: #sends only non empty lists
-                http_response = requests.post(url, data = json.dumps( dict( requests = request_list, token_auth = self._configContext.getMatomoTokenAuth()) ))
+
+                # http_response = requests.post(url, data = json.dumps( dict( requests = request_list, token_auth = self._configContext.getMatomoTokenAuth()) ))
+                # ignore ssl verification
+                http_response = requests.post(url, data = json.dumps( dict( requests = request_list, token_auth = self._configContext.getMatomoTokenAuth()) ), verify=False)
+                
                 #http_response = requests.post(url, data = json.dumps( dict( requests = [ e._matomoRequest for e in events if not e.is_robot  ], token_auth = self._configContext.getMatomoTokenAuth()) ))
                 http_response.raise_for_status()
                 json_response = json.loads(http_response.text)
