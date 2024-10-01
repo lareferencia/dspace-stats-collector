@@ -12,7 +12,20 @@ Un agente de Python para enviar eventos de estadísticas de uso de DSpace usando
 
 Implementación de una alternativa ligera, fácil de desplegar y de solo lectura para un recolector de datos de uso de DSpace compatible con la infraestructura de estadísticas de uso de Matomo (LA Referencia y OpenAIRE). Envía datos de uso de repositorios individuales a un agregador regional externo mediante consultas de solo lectura al subsistema de estadísticas Solr y BD de DSpace.
 
+---
+<br/>
 
+
+## Guías para usuarios LA Referencia 
+
+
+- [Guía de Instalación (este documento)](https://github.com/lareferencia/dspace-stats-collector/blob/master/README.md)
+- [Guía de Actualización](https://github.com/lareferencia/dspace-stats-collector/blob/master/UPDATE.md)
+-  [Guía de Desinstalación](https://github.com/lareferencia/dspace-stats-collector/blob/master/UNINSTALL.md)
+
+---
+<br/>
+<br/>
 
 # Instalación - Ecosistema LA Referencia
 
