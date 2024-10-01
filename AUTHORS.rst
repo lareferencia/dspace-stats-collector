@@ -5,7 +5,7 @@ Credits
 Development Lead
 ----------------
 
-* LA Referencia <lareferencia.dev@gmail.com>
+* LA Referencia <soporte@lareferencia.redclara.net>
 
 Contributors
 ------------
