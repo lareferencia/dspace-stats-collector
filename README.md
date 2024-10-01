@@ -1,14 +1,10 @@
 LA Referencia DSpace Usage Stats Collector
 ============================
 
-.. image:: https://img.shields.io/pypi/v/dspace-stats-collector.svg
-        :target: https://pypi.python.org/pypi/dspace-stats-collector
-        
-.. image:: https://img.shields.io/pypi/l/dspace-stats-collector.svg
-        :target: https://pypi.python.org/pypi/dspace-stats-collector
-        :alt: License
+[![PyPI version](https://img.shields.io/pypi/v/dspace-stats-collector.svg)](https://pypi.python.org/pypi/dspace-stats-collector)
 
-* Free software: GNU General Public License v3
+[![License](https://img.shields.io/pypi/l/dspace-stats-collector.svg)](https://pypi.python.org/pypi/dspace-stats-collector)
+
 
 ### ¿Qué es DSpace Stats Collector?
 
