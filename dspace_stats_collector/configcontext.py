@@ -128,8 +128,16 @@ class ConfigurationContext:
             self.solrQueryUntilDate = None
 
         self.solrQueryRows= SOLR_QUERY_ROWS_SIZE
+
+
+        # check if no_limit exist in command line arguments ant then set maxEventsToSend to sys.maxsize
+        if commandLineArgs.no_limit:
+            # set to maximum value
+            self.maxEventsToSend = sys.maxsize
+            logger.info("No limit set. Exporting all events in this run.")
+        else: 
+            self.maxEventsToSend = int(self.properties['max.eventsToSend'])
         
-        self.maxEventsToSend = int(self.properties['max.eventsToSend'])
         logger.debug("Limit: %s" % self.maxEventsToSend)
         
         self.dspaceMajorVersion = self.properties['dspace.majorVersion']

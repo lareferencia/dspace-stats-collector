@@ -123,6 +123,9 @@ def run():
     if args.date_until:
         logger.debug("Date until: %s" % args.date_until.strftime("%Y-%m-%d"))
 
+    # set no_limit flag to args
+    args.no_limit = False
+
     repoName=args.repository
 
     try:
