@@ -122,6 +122,8 @@ class ConfigurationContext:
         else:
             logger.debug('No initial date provided, using current date.')
             self.solrQueryInitialTimestamp = date.today().strftime(TIMESTAMP_PATTERN)
+
+        self.date_from = datetime.strptime(self.solrQueryInitialTimestamp, TIMESTAMP_PATTERN)
         
         if commandLineArgs.date_until:
             self.solrQueryUntilDate = commandLineArgs.date_until.strftime(TIMESTAMP_PATTERN)
@@ -163,10 +165,7 @@ class ConfigurationContext:
         else:
             logger.error('Only implemented values for dspace.majorVersion are 4, 5 and 6. Received {}'.format(self.dspaceMajorVersion))
             raise NotImplementedError
-        
-        # Export file name
-        if commandLineArgs.year != None and commandLineArgs.month != None != None:
-            self.exportFileName = "%s_%s_%s.txt" % (EXPORT_FILE_NAME_BASE, commandLineArgs.year , commandLineArgs.month) 
+
 
 
 
@@ -194,7 +193,10 @@ class ConfigurationContext:
         return str( self.properties.get('solr.core', DEFAULT_SOLR_STATS_CORE_NAME) )
     
     def getExportFileName(self):
-        return self.exportFileName
+        month = self.date_from.strftime("%m")
+        year = self.date_from.strftime("%Y")
+
+        return "%s_%s_%s.txt" % (EXPORT_FILE_NAME_BASE, year , month) 
 
     def close(self):
 
