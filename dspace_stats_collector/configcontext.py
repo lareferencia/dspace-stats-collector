@@ -165,7 +165,8 @@ class ConfigurationContext:
             raise NotImplementedError
         
         # Export file name
-        self.exportFileName = "%s_%s_%s.txt" % (EXPORT_FILE_NAME_BASE, commandLineArgs.year , commandLineArgs.month) 
+        if commandLineArgs.year != None and commandLineArgs.month != None != None:
+            self.exportFileName = "%s_%s_%s.txt" % (EXPORT_FILE_NAME_BASE, commandLineArgs.year , commandLineArgs.month) 
 
 
 
