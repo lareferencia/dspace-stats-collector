@@ -91,7 +91,6 @@ def run():
         loglevel = logging.INFO
    
     logger.debug("Verbose: %s" % args.verbose)
-    logger.debug("Repository: %s" % args.repository)
     logger.debug("Configuration Directory: %s" % args.config_dir)
     logger.debug("Archived core year selected: %s" % args.archived_core)
 
@@ -100,24 +99,35 @@ def run():
     
     # calculate args.date_from and args.date_until based on args.year and args.month
     if args.year and args.month:
-        args.date_from = datetime(args.year, args.month, 1)
+        # Inicializa date_from al primer día del mes a las 00:00
+        args.date_from = datetime(args.year, args.month, 1, 0, 0, 0)
 
-        args.date_until = datetime(args.year, args.month, 1)
-        
-        args.date_until = args.date_until.replace(month=args.date_until.month+1)
-        args.date_until = args.date_until.replace(day=1)
-        args.date_until = args.date_until - timedelta(days=1)
+        # Inicializa date_until al primer día del mes a las 00:00
+        args.date_until = datetime(args.year, args.month, 1, 0, 0, 0)
+    
+        if args.month == 12:
+            # Si el mes es diciembre, cambia date_until al primer día de enero del año siguiente
+            args.date_until = args.date_until.replace(month=1)
+            args.date_until = args.date_until.replace(year=args.date_until.year + 1)
+        else:
+            # Si el mes no es diciembre, cambia date_until al primer día del mes siguiente
+            args.date_until = args.date_until.replace(month=args.date_until.month + 1)
+            args.date_until = args.date_until.replace(day=1)
+    
+    # Ajusta date_until al último día del mes especificado restando un día y estableciendo la hora al final del día
+    args.date_until = args.date_until - timedelta(days=1)
+    args.date_until = args.date_until.replace(hour=23, minute=59, second=59)
 
     if args.date_from:
-        logger.info("Date from: %s" % args.date_from.strftime("%Y-%m-%d"))
+        logger.info("Date from: %s" % args.date_from.strftime("%Y-%m-%d %H:%M:%S"))
 
     if args.date_until:
-        logger.info("Date until: %s" % args.date_until.strftime("%Y-%m-%d"))
+        logger.info("Date until: %s" % args.date_until.strftime("%Y-%m-%d %H:%M:%S"))
 
     ## add no_limit flag to args
     args.no_limit = True
 
-    repoName=args.repository
+    repoName='default'
 
     try:
         configContext = ConfigurationContext(repoName, args)    
@@ -125,13 +135,14 @@ def run():
         logger.error("Error while loading configuration: %s" % e)
         sys.exit(1)
       
-    eventPipeline = EventPipelineBuilder().build(configContext)
 
     try:    
+        eventPipeline = EventPipelineBuilder().build(configContext)
         eventPipeline.run()
   
     except Exception as e:
-        logger.error("Unknown exception. Events will be processed in the next run. Error was: %s" % e)
+        logger.error("Unknown exception. Error was: %s" % e)
+        traceback.print_exc()
     
     # close all open resources in configContext (ie: dbconnection)
     configContext.close()

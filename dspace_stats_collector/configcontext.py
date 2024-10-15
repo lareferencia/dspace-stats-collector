@@ -43,6 +43,7 @@ DEFAULT_OUPUT_LIMIT = 100
 COUNTER_ROBOTS_FILE = 'COUNTER_Robots_list.json'
 LAST_TRACKED_TIMESTAMP_HISTORY_FIELD = 'lastTrackedEventTimestamp'
 DEFAULT_ANONYMIZE_IP_MASK = '255.255.255.255'
+EXPORT_FILE_NAME_BASE = 'dspace_stats_export'
 
 class History:
 
@@ -162,6 +163,9 @@ class ConfigurationContext:
         else:
             logger.error('Only implemented values for dspace.majorVersion are 4, 5 and 6. Received {}'.format(self.dspaceMajorVersion))
             raise NotImplementedError
+        
+        # Export file name
+        self.exportFileName = "%s_%s_%s.txt" % (EXPORT_FILE_NAME_BASE, commandLineArgs.year , commandLineArgs.month) 
 
 
 
@@ -187,6 +191,9 @@ class ConfigurationContext:
 
     def getSolrStatsCoreName(self):
         return str( self.properties.get('solr.core', DEFAULT_SOLR_STATS_CORE_NAME) )
+    
+    def getExportFileName(self):
+        return self.exportFileName
 
     def close(self):
 

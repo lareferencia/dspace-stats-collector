@@ -33,7 +33,7 @@ class FileOutput:
 
     def __init__(self, configContext):
         self._configContext = configContext
-        self._file = open(configContext.properties['matomo.fileoutput'], 'w')
+        self._file = open( configContext.getExportFileName() , 'w')
 
     def run(self, events):
         
@@ -54,7 +54,7 @@ class FileOutput:
         self._file.close()
         
         #logger.debug("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), configContext.history.get_last_tracked_timestamp())) 
-        logger.info('DSpace Stats Collector finished export {} events from {} to {}. Breakdown: {} events sent succesfully, {} events discarted as robot'.format(processed, self._configContext.solrQueryInitialTimestamp, self._configContext.history.get_last_tracked_timestamp(), self._sender.getTotalSent(), robots_count))
+        logger.info('DSpace Stats Export finished {} events from {} to {}. Breakdown: {} events discarted as robot. Filename: {}'.format(processed, self._configContext.solrQueryInitialTimestamp, self._configContext.solrQueryUntilDate, robots_count, self._configContext.getExportFileName()))
         
     ## write to file
     def write(self, event):
