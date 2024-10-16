@@ -122,6 +122,10 @@ def run():
             args.date_until = args.date_until - timedelta(days=1)
             args.date_until = args.date_until.replace(hour=23, minute=59, second=59)
 
+        else:
+            logger.error("Debe especificar year y month o date_from y date_until.")
+            return
+
      # Verificar si la diferencia entre date_from y date_until es mayor a un mes
     if args.date_from and args.date_until:
         if (args.date_until - args.date_from).days > 31:
@@ -165,10 +169,16 @@ def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     
     # year to be processed is mandatory
-    parser.add_argument("-y", "--year", type=int, required=True, help="year to be processed")
+    parser.add_argument("-y", "--year", type=int, help="year to be processed")
 
     # month to be processed is mandatory
-    parser.add_argument("-m", "--month", type=int, required=True, help="month to be processed")
+    parser.add_argument("-m", "--month", type=int, help="month to be processed")
+
+    # date from
+    parser.add_argument("-f", "--date_from", help="date from")
+
+    # date until
+    parser.add_argument("-u", "--date_until", help="date until")
     
     parser.add_argument("-c",
                         "--config_dir",
