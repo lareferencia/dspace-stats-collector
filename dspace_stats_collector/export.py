@@ -97,26 +97,36 @@ def run():
     # setup logging
     logging.basicConfig(level=loglevel, format='%(asctime)s - %(levelname)s - %(message)s')
     
-    # calculate args.date_from and args.date_until based on args.year and args.month
-    if args.year and args.month:
-        # Inicializa date_from al primer día del mes a las 00:00
-        args.date_from = datetime(args.year, args.month, 1, 0, 0, 0)
+    # Verificar si date_from y date_until están presentes
+    if args.date_from and args.date_until:
+        # Ajustar date_from al inicio del día
+        args.date_from = datetime.strptime(args.date_from, "%Y-%m-%d")
+        args.date_from = args.date_from.replace(hour=0, minute=0, second=0)
 
-        # Inicializa date_until al primer día del mes a las 00:00
-        args.date_until = datetime(args.year, args.month, 1, 0, 0, 0)
-    
-        if args.month == 12:
-            # Si el mes es diciembre, cambia date_until al primer día de enero del año siguiente
-            args.date_until = args.date_until.replace(month=1)
-            args.date_until = args.date_until.replace(year=args.date_until.year + 1)
-        else:
-            # Si el mes no es diciembre, cambia date_until al primer día del mes siguiente
-            args.date_until = args.date_until.replace(month=args.date_until.month + 1)
-            args.date_until = args.date_until.replace(day=1)
-    
-    # Ajusta date_until al último día del mes especificado restando un día y estableciendo la hora al final del día
-    args.date_until = args.date_until - timedelta(days=1)
-    args.date_until = args.date_until.replace(hour=23, minute=59, second=59)
+        # Ajustar date_until al final del día
+        args.date_until = datetime.strptime(args.date_until, "%Y-%m-%d")
+        args.date_until = args.date_until.replace(hour=23, minute=59, second=59)
+    else:
+        # Calcular date_from y date_until basado en year y month
+        if args.year and args.month:
+            args.date_from = datetime(args.year, args.month, 1, 0, 0, 0)
+            args.date_until = datetime(args.year, args.month, 1, 0, 0, 0)
+
+            if args.month == 12:
+                args.date_until = args.date_until.replace(month=1)
+                args.date_until = args.date_until.replace(year=args.date_until.year + 1)
+            else:
+                args.date_until = args.date_until.replace(month=args.date_until.month + 1)
+                args.date_until = args.date_until.replace(day=1)
+
+            args.date_until = args.date_until - timedelta(days=1)
+            args.date_until = args.date_until.replace(hour=23, minute=59, second=59)
+
+     # Verificar si la diferencia entre date_from y date_until es mayor a un mes
+    if args.date_from and args.date_until:
+        if (args.date_until - args.date_from).days > 31:
+            logger.error("El periodo entre date_from y date_until debe ser igual o menor a un mes.")
+            return
 
     if args.date_from:
         logger.info("Date from: %s" % args.date_from.strftime("%Y-%m-%d %H:%M:%S"))

@@ -5,35 +5,14 @@
 import logging
 logger = logging.getLogger()
 
-import urllib.parse
-import json
-import random
-from datetime import datetime
-from pytz import timezone
-import requests
-import copy
 
-# define Python user-defined exceptions
-class MatomoException(Exception):
-    """Base class for other exceptions"""
-    pass
-
-class MatomoOfflineException(MatomoException):
-    """Base class for other exceptions"""
-    pass
-
-class MatomoInternalServerException(MatomoException):
-    """Base class for other exceptions"""
-    pass
-
-
-BULK_TRACKING_BATCH_SIZE_DEFAULT = 50
+import gzip
 
 class FileOutput:
 
     def __init__(self, configContext):
         self._configContext = configContext
-        self._file = open( configContext.getExportFileName() , 'w')
+        self._file = gzip.open(configContext.getExportFileName() + '.gz', 'wt')
 
     def run(self, events):
         
@@ -53,7 +32,6 @@ class FileOutput:
         
         self._file.close()
         
-        #logger.debug("Starting processing: %s on: %s from date: %s" % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), configContext.history.get_last_tracked_timestamp())) 
         logger.info('DSpace Stats Export finished {} events from {} to {}. Breakdown: {} events discarted as robot. Filename: {}'.format(processed, self._configContext.solrQueryInitialTimestamp, self._configContext.solrQueryUntilDate, robots_count, self._configContext.getExportFileName()))
         
     ## write to file
