@@ -22,7 +22,7 @@ Implementación de una alternativa ligera, fácil de desplegar y de solo lectura
 - [Guía de Instalación (este documento)](https://github.com/lareferencia/dspace-stats-collector/blob/master/README.md)
 - [Guía de Actualización](https://github.com/lareferencia/dspace-stats-collector/blob/master/UPDATE.md)
 -  [Guía de Desinstalación](https://github.com/lareferencia/dspace-stats-collector/blob/master/UNINSTALL.md)
-
+- [Exportador de eventos](https://github.com/lareferencia/dspace-stats-collector/blob/master/EXPORT.md)
 ---
 <br/>
 <br/>
@@ -85,7 +85,7 @@ Seguidamente ejecute el siguiente comando reemplazando **YYYY-MM-DD** por la fec
 
 El parámetro -f especifica la fecha (año-mes-día) que marca el inicio del envío de datos a Matomo desde el repositorio DSpace. 
 
-**Importante!!: Por favor verifique con su nodo nacional la fecha de inicio de envio para ese momento.**
+**Importante!!: Por favor verifique con su nodo nacional la fecha de inicio de envio para ese momento. No ejecute el comando por primera vez sin esta información.**
 
 ```
 CURRENT_USER_HOME/dspace-stats-collector/bin/dspace-stats-collector -f YYYY-MM-DD --verbose
@@ -123,6 +123,13 @@ NOTA: reemplazar **CURRENT_USER_HOME** por el home del usuario que utilizó para
 
 Nota: De acuerdo a las características de su repositorio, puede que sea necesario aumentar la frecuencia de envío de datos.  En caso de tener un repositorio de grandes dimensiones consulte con su técnico responsable del nodo nacional.
  
+
+## 7. Exportación de eventos antiguos
+
+A efectos de facilitar el envío de eventos de meses o años anteriores se ha desarrollado un comando (beta), por favor contacte a su representante nacional para coordinar envíos usando esta herramienta.
+
+[Exportador de eventos](https://github.com/lareferencia/dspace-stats-collector/blob/master/EXPORT.md)
+
 
 -----------------------------------------------------------------
 
