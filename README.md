@@ -21,7 +21,7 @@ Implementación de una alternativa ligera, fácil de desplegar y de solo lectura
 
 - [Guía de Instalación (este documento)](https://github.com/lareferencia/dspace-stats-collector/blob/master/README.md)
 - [Guía de Actualización](https://github.com/lareferencia/dspace-stats-collector/blob/master/UPDATE.md)
--  [Guía de Desinstalación](https://github.com/lareferencia/dspace-stats-collector/blob/master/UNINSTALL.md)
+- [Guía de Desinstalación](https://github.com/lareferencia/dspace-stats-collector/blob/master/UNINSTALL.md)
 - [Exportador de eventos](https://github.com/lareferencia/dspace-stats-collector/blob/master/EXPORT.md)
 ---
 <br/>
