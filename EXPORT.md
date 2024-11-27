@@ -1,6 +1,7 @@
 # Manual de Uso del Comando `dspace-stats-export`
 
-### Atención!! Este comando está en fase beta y debe ser utilizado en coordinación con el equipo de LA Referencia a través de su contacto técnico nacional
+### Atención!! Este comando está en fase beta y debe ser utilizado en coordinación con el equipo de LA Referencia a través de su contacto técnico nacional. Este comando está disponible a partir de la versión 0.7.3, para actualizar puede seguir la [Guía de Actualización](https://github.com/lareferencia/dspace-stats-collector/blob/master/UPDATE.md)
+
 
 ## Descripción
 
