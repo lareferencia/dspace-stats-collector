@@ -103,30 +103,25 @@ def run():
         args.date_from = datetime.strptime(args.date_from, "%Y-%m-%d")
         args.date_from = args.date_from.replace(hour=0, minute=0, second=0)
 
-        # Ajustar date_until al final del día
+        # Ajustar date_until al inicio del día siguiente adicionando un día a la fecha
         args.date_until = datetime.strptime(args.date_until, "%Y-%m-%d")
-        args.date_until = args.date_until.replace(hour=23, minute=59, second=59)
+        args.date_until = args.date_until + timedelta(days=1)
+        args.date_until = args.date_until.replace(hour=0, minute=0, second=0)
+        
     else:
         # Calcular date_from y date_until basado en year y month
         if args.year and args.month:
             args.date_from = datetime(args.year, args.month, 1, 0, 0, 0)
-            args.date_until = datetime(args.year, args.month, 1, 0, 0, 0)
 
             if args.month == 12:
-                args.date_until = args.date_until.replace(month=1)
-                args.date_until = args.date_until.replace(year=args.date_until.year + 1)
+                args.date_until = datetime(args.year + 1, 1, 1, 0, 0, 0)
             else:
-                args.date_until = args.date_until.replace(month=args.date_until.month + 1)
-                args.date_until = args.date_until.replace(day=1)
-
-            args.date_until = args.date_until - timedelta(days=1)
-            args.date_until = args.date_until.replace(hour=23, minute=59, second=59)
-
+                args.date_until = datetime(args.year, args.month + 1, 1, 0, 0, 0)
         else:
             logger.error("Debe especificar year y month o date_from y date_until.")
             return
 
-     # Verificar si la diferencia entre date_from y date_until es mayor a un mes
+    # Verificar si la diferencia entre date_from y date_until es mayor a un mes
     if args.date_from and args.date_until:
         if (args.date_until - args.date_from).days > 31:
             logger.error("El periodo entre date_from y date_until debe ser igual o menor a un mes.")
