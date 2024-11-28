@@ -179,6 +179,9 @@ class ConfigurationContext:
 
     def getMatomoTokenAuth(self):
         return self.properties['matomo.token_auth']
+    
+    def getMatomoIdSite(self):
+        return self.properties['matomo.idSite']
 
     def getMatomoUrl(self):
         return self.properties['matomo.trackerUrl']
@@ -195,8 +198,9 @@ class ConfigurationContext:
     def getExportFileName(self):
         month = self.date_from.strftime("%m")
         year = self.date_from.strftime("%Y")
+        idSite = self.properties['matomo.idSite']
 
-        return "%s_%s_%s.txt" % (EXPORT_FILE_NAME_BASE, year , month) 
+        return "%s_%s_%s_%s.txt" % (EXPORT_FILE_NAME_BASE, idSite, year , month) 
 
     def close(self):
 
