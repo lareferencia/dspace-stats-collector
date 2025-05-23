@@ -87,10 +87,12 @@ class History:
             # Se pueden añadir otros formatos comunes si es necesario.
             # Ejemplo: "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"
             possible_formats = [
-                TIMESTAMP_PATTERN,
-                "%Y-%m-%dT%H:%M:%SZ",      # Formato ISO 8601 sin milisegundos
-                "%Y-%m-%d %H:%M:%S.%f",   # Formato común con espacio y milisegundos
-                "%Y-%m-%d %H:%M:%S"       # Formato común con espacio sin milisegundos
+                TIMESTAMP_PATTERN,                # "%Y-%m-%dT%H:%M:%S.%fZ"
+                "%Y-%m-%dT%H:%M:%S.%f",           # Como TIMESTAMP_PATTERN pero sin Z
+                "%Y-%m-%dT%H:%M:%SZ",             # Formato ISO 8601 sin milisegundos, con Z
+                "%Y-%m-%dT%H:%M:%S",              # Formato ISO 8601 sin milisegundos, sin Z
+                "%Y-%m-%d %H:%M:%S.%f",          # Formato común con espacio y milisegundos
+                "%Y-%m-%d %H:%M:%S"              # Formato común con espacio sin milisegundos
             ]
             
             dt_object = None
@@ -108,11 +110,13 @@ class History:
                 return dt_object.strftime(TIMESTAMP_PATTERN)
             else:
                 logger.error(
-                    "Error parsing stored timestamp: '%s'. Tried formats: %s. Returning None.",
+                    "Error parsing stored timestamp: '%s'. Tried formats: %s.",
                     timestamp_str,
                     possible_formats
                 )
-                return None
+                raise ValueError(
+                    f"Could not parse timestamp string '{timestamp_str}' with any of the available formats: {possible_formats}"
+                )
         return None
 
 
