@@ -17,6 +17,8 @@ try:
 except Exception: #ImportError
     from eventpipeline import Event
 
+TIMESTAMP_PATTERN = "%Y-%m-%dT%H:%M:%S.%fZ"
+
 class SolrTimestampCursor(object):
     
     """ Implements the concept of timestamped cursor """
@@ -90,7 +92,7 @@ class SolrTimestampCursor(object):
                 # finally we consider an special case, if the lastGoodFromTimestamp + retyToLookAhead is greater than present moment then we are done
                 try:
                     # example 2022-10-17T08:36:03.879Z
-                    parsedate = datetime.datetime.strptime(str(lastGoodFromTimestamp), '%Y-%m-%dT%H:%M:%S.%fZ')
+                    parsedate = datetime.datetime.strptime(str(lastGoodFromTimestamp), TIMESTAMP_PATTERN)
                     parsedate = parsedate + datetime.timedelta(days=retryToLookAhead)   
                     
                     if parsedate > datetime.datetime.now(): 
@@ -131,7 +133,7 @@ class SolrStatisticsInput:
         self._solrServerURL = configContext.solrStatsCoreURL
 
     def run(self):
-        solr = pysolr.Solr(self._solrServerURL, timeout=100)
+        solr = pysolr.Solr(self._solrServerURL, timeout=600)
         cursor = SolrTimestampCursor(solr, {
             'q': '*',
             'sort': 'time asc',
