@@ -46,10 +46,7 @@ DEFAULT_ANONYMIZE_IP_MASK = '255.255.255.255'
 EXPORT_FILE_NAME_BASE = 'dspace_stats_export'
 
 class History:
-
     
-    #self.history = self._load_history()
-
     def __init__(self, base_path, reponame):
         self.javaprops = JavaProperties()
         self.base_path = base_path
@@ -69,7 +66,13 @@ class History:
         try:
             if not os.path.exists(self.base_path):
                 os.makedirs(self.base_path)
-            self.javaprops.set_property(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, timestamp)    
+            
+            if isinstance(timestamp, datetime):
+                timestamp_str = timestamp.strftime(TIMESTAMP_PATTERN)
+            else:
+                timestamp_str = timestamp # Assume it's already a string in the correct format
+
+            self.javaprops.set_property(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, timestamp_str)    
             with open(self.filename, mode='w') as f:
                 self.javaprops.store(f)
             self.property_dict = self.javaprops.get_property_dict()    
@@ -78,7 +81,39 @@ class History:
             raise
 
     def get_last_tracked_timestamp(self):
-        return self.property_dict.get(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, None)
+        timestamp_str = self.property_dict.get(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, None)
+        if timestamp_str:
+            # Lista de formatos a intentar, TIMESTAMP_PATTERN es el preferido y el primero.
+            # Se pueden añadir otros formatos comunes si es necesario.
+            # Ejemplo: "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"
+            possible_formats = [
+                TIMESTAMP_PATTERN,
+                "%Y-%m-%dT%H:%M:%SZ",      # Formato ISO 8601 sin milisegundos
+                "%Y-%m-%d %H:%M:%S.%f",   # Formato común con espacio y milisegundos
+                "%Y-%m-%d %H:%M:%S"       # Formato común con espacio sin milisegundos
+            ]
+            
+            dt_object = None
+            for fmt in possible_formats:
+                try:
+                    dt_object = datetime.strptime(timestamp_str, fmt)
+                    # Si el parseo es exitoso, rompemos el bucle
+                    break 
+                except ValueError:
+                    # Si este formato falla, probamos el siguiente
+                    continue
+            
+            if dt_object:
+                # Retornar la fecha y hora formateada como cadena según TIMESTAMP_PATTERN
+                return dt_object.strftime(TIMESTAMP_PATTERN)
+            else:
+                logger.error(
+                    "Error parsing stored timestamp: '%s'. Tried formats: %s. Returning None.",
+                    timestamp_str,
+                    possible_formats
+                )
+                return None
+        return None
 
 
 class ConfigurationContext:
@@ -338,6 +373,6 @@ class ConfigurationContext:
             response = requests.get(url)
         except:
             logger.error("Commit to Solr server failed")
-    
 
-    
+
+
