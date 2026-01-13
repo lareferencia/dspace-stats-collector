@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Dspace DB components """
+""" DSpace 6 Oracle DB components """
 
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 try:
     from .dspacedb import DSpaceDB
-except Exception: #ImportError
+except ImportError:
     from dspacedb import DSpaceDB
 
+
 class DSpaceDB6Oracle(DSpaceDB):
+    """Database connector for DSpace 6.x (Oracle with UUID)."""
 
-    def __init__(self, jdbcUrl, username, password):
-
-        DSpaceDB.__init__(self,jdbcUrl, username, password)
-
+    def __init__(self, jdbc_url: str, username: str, password: str) -> None:
+        # Define SQL templates before calling parent __init__
+        # Use :param syntax for SQLAlchemy text().bindparams()
+        # Note: Oracle UUID handling requires special string manipulation
         self._queryDownloadSQL = """
             SELECT regexp_replace(lower(mv.dspace_object_id), '(........)(....)(....)(....)(.*)', '\\1-\\2-\\3-\\4-\\5') AS id,            
                     mv2.text_value AS record_title,
@@ -30,11 +32,11 @@ class DSpaceDB6Oracle(DSpaceDB):
             INNER JOIN item2bundle i ON i.bundle_id = bb.bundle_id
             INNER JOIN handle h ON h.resource_id = i.item_id
             INNER JOIN metadatavalue mv2 ON mv2.dspace_object_id = i.item_id
-            WHERE mv.metadata_field_id = {dcTitleId}
+            WHERE mv.metadata_field_id = :dcTitleId
                 AND b.sequence_id IS NOT NULL
                 AND b.deleted = 0
-                AND mv2.metadata_field_id = {dcTitleId}
-                AND mv.dspace_object_id = upper(replace('{bitstreamId}','-',''))
+                AND mv2.metadata_field_id = :dcTitleId
+                AND mv.dspace_object_id = upper(replace(:bitstreamId, '-', ''))
         """
 
         self._queryItemSQL = """
@@ -47,20 +49,23 @@ class DSpaceDB6Oracle(DSpaceDB):
                     NULL AS filename
             FROM metadatavalue mv
             INNER JOIN handle h ON h.resource_id = mv.dspace_object_id
-            WHERE metadata_field_id = {dcTitleId}
-                AND h.resource_type_id=2
-                AND mv.dspace_object_id = upper(replace('{itemId}','-',''))
-        """
-      
-        self._queryTitleSQL = """
-            SELECT metadata_field_id AS "dcTitleId"
-                FROM metadatafieldregistry mfr,
-                    metadataschemaregistry msr
-                WHERE mfr.metadata_schema_id = msr.metadata_schema_id
-                AND short_id = 'dc'
-                AND element = 'title'
-                AND qualifier IS NULL
+            WHERE metadata_field_id = :dcTitleId
+                AND h.resource_type_id = 2
+                AND mv.dspace_object_id = upper(replace(:itemId, '-', ''))
         """
 
+        self._queryTitleSQL = """
+            SELECT metadata_field_id AS "dcTitleId"
+            FROM metadatafieldregistry mfr,
+                 metadataschemaregistry msr
+            WHERE mfr.metadata_schema_id = msr.metadata_schema_id
+              AND short_id = 'dc'
+              AND element = 'title'
+              AND qualifier IS NULL
+        """
+
+        # Call parent constructor
+        super().__init__(jdbc_url, username, password)
+        
+        # Get DC Title ID after connection is established
         self._dcTitleId = self.getDcTitleId()
-    

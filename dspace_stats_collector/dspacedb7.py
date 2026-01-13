@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Dspace DB components """
+""" DSpace 7 DB components """
 
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 try:
     from .dspacedb import DSpaceDB
-except Exception: #ImportError
+except ImportError:
     from dspacedb import DSpaceDB
 
+
 class DSpaceDB7(DSpaceDB):
+    """Database connector for DSpace 7.x (PostgreSQL with UUID)."""
 
-    def __init__(self, jdbcUrl, username, password):
-
-        DSpaceDB.__init__(self,jdbcUrl, username, password)
-
+    def __init__(self, jdbc_url: str, username: str, password: str) -> None:
+        # Define SQL templates before calling parent __init__
+        # Use :param syntax for SQLAlchemy text().bindparams()
         self._queryDownloadSQL = """
             SELECT mv.dspace_object_id::text AS id,
                     mv2.text_value AS record_title,
@@ -30,11 +31,11 @@ class DSpaceDB7(DSpaceDB):
             RIGHT JOIN item2bundle AS i ON i.bundle_id = bb.bundle_id
             RIGHT JOIN handle AS h ON h.resource_id = i.item_id
             RIGHT JOIN metadatavalue AS mv2 ON mv2.dspace_object_id = i.item_id
-            WHERE mv.metadata_field_id = {dcTitleId}
+            WHERE mv.metadata_field_id = :dcTitleId
                 AND b.sequence_id IS NOT NULL
                 AND b.deleted = FALSE
-                AND mv2.metadata_field_id = {dcTitleId}
-                AND mv.dspace_object_id = uuid('{bitstreamId}');
+                AND mv2.metadata_field_id = :dcTitleId
+                AND mv.dspace_object_id = uuid(:bitstreamId)
         """
 
         self._queryItemSQL = """
@@ -47,23 +48,23 @@ class DSpaceDB7(DSpaceDB):
                     NULL AS filename
             FROM metadatavalue AS mv
             RIGHT JOIN handle AS h ON h.resource_id = mv.dspace_object_id
-            WHERE metadata_field_id = {dcTitleId}
-                AND h.resource_type_id=2
-                AND mv.dspace_object_id = uuid('{itemId}');
+            WHERE metadata_field_id = :dcTitleId
+                AND h.resource_type_id = 2
+                AND mv.dspace_object_id = uuid(:itemId)
         """
-      
+
         self._queryTitleSQL = """
             SELECT metadata_field_id AS "dcTitleId"
-                FROM metadatafieldregistry mfr,
-                    metadataschemaregistry msr
-                WHERE mfr.metadata_schema_id = msr.metadata_schema_id
-                AND short_id = 'dc'
-                AND element = 'title'
-                AND qualifier IS NULL;
+            FROM metadatafieldregistry mfr,
+                 metadataschemaregistry msr
+            WHERE mfr.metadata_schema_id = msr.metadata_schema_id
+              AND short_id = 'dc'
+              AND element = 'title'
+              AND qualifier IS NULL
         """
 
+        # Call parent constructor
+        super().__init__(jdbc_url, username, password)
+        
+        # Get DC Title ID after connection is established
         self._dcTitleId = self.getDcTitleId()
-
-
-
-    

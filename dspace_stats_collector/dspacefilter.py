@@ -1,36 +1,85 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Main / Command line tool """
+"""
+DSpace DB Filter.
+
+Enriches events with metadata from the DSpace database.
+"""
 
 import logging
-logger = logging.getLogger()
+from typing import List, Iterator, Optional
 
-class DSpaceDBFilter:
+try:
+    from .eventpipeline import Event, PipelineFilter
+except ImportError:
+    from eventpipeline import Event, PipelineFilter
 
-    def __init__(self, configContext):
-        self._db = configContext.db
+logger = logging.getLogger(__name__)
 
-    def run(self, events):
+
+BATCH_SIZE = 50
+
+
+class DSpaceDBFilter(PipelineFilter):
+    """
+    Enriches usage events with metadata (title, handle, filenames) 
+    queried from the DSpace database.
+    """
+
+    def __init__(self, config_context) -> None:
+        self._db = config_context.db
+        self._batch_size = BATCH_SIZE
+
+    def run(self, events: Iterator[Event]) -> Iterator[Event]:
+        """
+        Process events in batches to allow for database prefetching.
+        """
+        buffer: List[Event] = []
 
         for event in events:
-            resourceId = event._src['id']
+            buffer.append(event)
+            if len(buffer) >= self._batch_size:
+                yield from self._process_batch(buffer)
+                buffer = []
+        
+        # Process remaining events
+        if buffer:
+            yield from self._process_batch(buffer)
 
-            if event._src['type'] == 0: # Download
-                isDownload = True
-                event._db = self._db.queryDownload(resourceId)
-               
-            elif event._src['type'] == 2: # Item
-                isDownload = False
-                event._db = self._db.queryItem(resourceId)
+    def _process_batch(self, events: List[Event]) -> Iterator[Event]:
+        """Process a batch of events."""
+        # Future optimization: self._db.prefetch(events)
+        
+        for event in events:
+            resource_id = event._src['id']
+            event_type = event._src['type']
 
-            else:
-                logger.error("Unexpected resource type {} for resource: {}".format(event._src['type'], event._src))
-                raise ValueError
+            try:
+                if event_type == 0:  # Download
+                    event_db = self._db.queryDownload(resource_id)
+                elif event_type == 2:  # Item
+                    event_db = self._db.queryItem(resource_id)
+                else:
+                    logger.warning(
+                        "Unexpected resource type %s for resource: %s", 
+                        event_type, event._src
+                    )
+                    continue
 
-            if event._db is None:
-                logger.debug("Dropping event due db error on data recovery: {}".format(event._src))
-                continue # Drop event if could not recover data from db
+                if event_db is None:
+                    logger.debug(
+                        "Dropping event - data not found in DB: %s", 
+                        event._src
+                    )
+                    continue
 
-            logger.debug('DSPACE_DB_FILTER:: Event: {}'.format(event._id))
+                event._db = event_db
+                logger.debug('DSPACE_DB_FILTER:: Event enriched: %s', event._id)
+                yield event
 
-            yield event
+            except Exception as e:
+                logger.error(
+                    "Error processing event %s: %s", 
+                    event._src.get('id'), e
+                )
+                continue

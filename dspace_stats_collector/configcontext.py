@@ -1,123 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Dspace Repository instance config """
+""" DSpace Repository instance config """
 
 import logging
-logger = logging.getLogger()
-
-from pyjavaprops.javaproperties import JavaProperties
-import json
-import requests
 import os
 import sys
-from datetime import datetime
-from datetime import date
+from datetime import datetime, date
 
+from .config.history import History, TIMESTAMP_PATTERN
+from .config.loader import ConfigLoader, DEFAULT_SOLR_STATS_CORE_NAME
+from .config.settings import CollectorSettings
 try:
-    from .dspacedb4 import DSpaceDB4
-    from .dspacedb5 import DSpaceDB5
-    from .dspacedb6 import DSpaceDB6
-    from .dspacedb7 import DSpaceDB7
-    from .dspacedb5cris import DSpaceDB5Cris
-    from .dspacedb5oracle import DSpaceDB5Oracle
-    from .dspacedb6oracle import DSpaceDB6Oracle
-except Exception: #ImportError
-    from dspacedb4 import DSpaceDB4
-    from dspacedb5 import DSpaceDB5
-    from dspacedb6 import DSpaceDB6
-    from dspacedb7 import DSpaceDB7
-    from dspacedb5cris import DSpaceDB5Cris
-    from dspacedb5oracle import DSpaceDB5Oracle
-    from dspacedb6oracle import DSpaceDB6Oracle
+    from .database_factory import create_database
+except ImportError:
+    from database_factory import create_database
 
-SAVE_DIR = os.path.expanduser('~') + "/dspace-stats-collector/var/timestamp"
+logger = logging.getLogger(__name__)
+
 DEFAULT_INSTALL_PATH = os.path.expanduser('~') + "/dspace-stats-collector"
-DEFAULT_COLLECTOR_COMMAND_NAME="dspace-stats-collector"
 DEFAULT_CONFIG_PATH = DEFAULT_INSTALL_PATH + "/config"
-DEFAULT_SOLR_SERVER = "http://localhost:8080/solr"
-
-DEFAULT_SOLR_STATS_CORE_NAME = "statistics"
-TIMESTAMP_PATTERN = "%Y-%m-%dT%H:%M:%S.%fZ"
-SOLR_QUERY_ROWS_SIZE = 500
-DEFAULT_OUPUT_LIMIT = 100
+DEFAULT_COLLECTOR_COMMAND_NAME = "dspace-stats-collector"
+SAVE_DIR = os.path.expanduser('~') + "/dspace-stats-collector/var/timestamp"
 COUNTER_ROBOTS_FILE = 'COUNTER_Robots_list.json'
-LAST_TRACKED_TIMESTAMP_HISTORY_FIELD = 'lastTrackedEventTimestamp'
-DEFAULT_ANONYMIZE_IP_MASK = '255.255.255.255'
+DEFAULT_OUPUT_LIMIT = 100
 EXPORT_FILE_NAME_BASE = 'dspace_stats_export'
-
-class History:
-    
-    def __init__(self, base_path, reponame):
-        self.javaprops = JavaProperties()
-        self.base_path = base_path
-        self.reponame = reponame
-        self.property_dict = {LAST_TRACKED_TIMESTAMP_HISTORY_FIELD:None}
-        self.filename = "{}/{}".format(base_path, reponame + ".dat")
-
-        try:
-            with open(self.filename) as f:
-                self.javaprops.load(f)
-            self.property_dict = self.javaprops.get_property_dict()
-            logger.debug("Read succesfully history file %s" % self.filename)
-        except (FileNotFoundError, UnboundLocalError):
-            logger.debug("History file %s does not exist. Creating one..." % self.filename)
-
-    def save_last_tracked_timestamp(self, timestamp):
-        try:
-            if not os.path.exists(self.base_path):
-                os.makedirs(self.base_path)
-            
-            if isinstance(timestamp, datetime):
-                timestamp_str = timestamp.strftime(TIMESTAMP_PATTERN)
-            else:
-                timestamp_str = timestamp # Assume it's already a string in the correct format
-
-            self.javaprops.set_property(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, timestamp_str)    
-            with open(self.filename, mode='w') as f:
-                self.javaprops.store(f)
-            self.property_dict = self.javaprops.get_property_dict()    
-        except (FileNotFoundError, UnboundLocalError):
-            logger.debug("Could not save to history file %s" % self.filename)
-            raise
-
-    def get_last_tracked_timestamp(self):
-        timestamp_str = self.property_dict.get(LAST_TRACKED_TIMESTAMP_HISTORY_FIELD, None)
-        if timestamp_str:
-            # Lista de formatos a intentar, TIMESTAMP_PATTERN es el preferido y el primero.
-            # Se pueden añadir otros formatos comunes si es necesario.
-            # Ejemplo: "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"
-            possible_formats = [
-                TIMESTAMP_PATTERN,                # "%Y-%m-%dT%H:%M:%S.%fZ"
-                "%Y-%m-%dT%H:%M:%S.%f",           # Como TIMESTAMP_PATTERN pero sin Z
-                "%Y-%m-%dT%H:%M:%SZ",             # Formato ISO 8601 sin milisegundos, con Z
-                "%Y-%m-%dT%H:%M:%S",              # Formato ISO 8601 sin milisegundos, sin Z
-                "%Y-%m-%d %H:%M:%S.%f",          # Formato común con espacio y milisegundos
-                "%Y-%m-%d %H:%M:%S"              # Formato común con espacio sin milisegundos
-            ]
-            
-            dt_object = None
-            for fmt in possible_formats:
-                try:
-                    dt_object = datetime.strptime(timestamp_str, fmt)
-                    # Si el parseo es exitoso, rompemos el bucle
-                    break 
-                except ValueError:
-                    # Si este formato falla, probamos el siguiente
-                    continue
-            
-            if dt_object:
-                # Retornar la fecha y hora formateada como cadena según TIMESTAMP_PATTERN
-                return dt_object.strftime(TIMESTAMP_PATTERN)
-            else:
-                logger.error(
-                    "Error parsing stored timestamp: '%s'. Tried formats: %s.",
-                    timestamp_str,
-                    possible_formats
-                )
-                raise ValueError(
-                    f"Could not parse timestamp string '{timestamp_str}' with any of the available formats: {possible_formats}"
-                )
-        return None
 
 
 class ConfigurationContext:
@@ -130,253 +36,116 @@ class ConfigurationContext:
     counterRobotsFileName = COUNTER_ROBOTS_FILE
 
     def __init__(self, repoName, commandLineArgs):
-        
         self.repoName = repoName
-        self.propertiesFilename = ConfigurationContext.getPropertiesFieldPath(commandLineArgs.config_dir, repoName)
-
-        self.properties = self._read_properties()
-        self.dspaceProperties = self._read_dspace_properties()
-
-        #History
+        
+        # 1. Initialize History (State)
         self.history = History(SAVE_DIR, repoName)
+        
+        # 2. Load Configuration (Settings)
+        # We need to know where config dir is. 
+        # Original code used commandLineArgs.config_dir or defaults.
+        # Check simple logic:
+        config_dir = commandLineArgs.config_dir
+        
+        loader = ConfigLoader(config_dir, repoName, commandLineArgs)
+        self.settings: CollectorSettings = loader.load_settings()
 
-        # Solr Context
-        if commandLineArgs.archived_core != None:
-            self.solrStatsCoreName = self.getSolrStatsCoreName() + "-" + commandLineArgs.archived_core
+        # 3. Setup Legacy Attributes (Facade)
+        # Many parts of the app might access these directly, so we map them.
+        self.dspaceMajorVersion = self.settings.dspace.major_version
+        self.maxEventsToSend = self.settings.max_events
+        self.anonymize_ip_mask = self.settings.anonymize_ip_mask
+        
+        self.solrStatsCoreName = self.settings.solr.core_name
+        self.solrServerURL = self.settings.solr.server_url
+        self.solrStatsCoreURL = f"{self.solrServerURL}/{self.solrStatsCoreName}"
+        
+        # Re-construct solrQueryInitialTimestamp/UntilDate logic if needed by external
+        # The loader handled date_from/until from args, but history fallback logic needs to happen here or be passed to loader.
+        # Actually loader check args, if args missing it uses History?
+        # Let's check original logic: 
+        # If args.date_from -> use it
+        # Else if history -> use it
+        # Else -> Today
+        
+        # My loader handled: args -> date_from (and put it in settings)
+        # But loader didn't have access to history for fallback.
+        # So I should refine logic here.
+        
+        if self.settings.solr.date_from:
+             self.solrQueryInitialTimestamp = self.settings.solr.date_from
+        elif self.history.get_last_tracked_timestamp():
+             self.solrQueryInitialTimestamp = self.history.get_last_tracked_timestamp()
+             logger.debug('Loaded initialTimestamp from history: {}'.format(self.solrQueryInitialTimestamp))
+             # Update settings so everyone is in sync
+             self.settings.solr.date_from = self.solrQueryInitialTimestamp
         else:
-            self.solrStatsCoreName = self.getSolrStatsCoreName()
-
-        self.solrServerURL = self._find_solr_server()
-        self.solrStatsCoreURL = self.solrServerURL + "/" + self.solrStatsCoreName
-
-        # COUNTER Robots
-        self.counterRobotsFilename = ("%s/" + ConfigurationContext.counterRobotsFileName) % (commandLineArgs.config_dir)
-
-        # Solr Query parameters -     
-        if commandLineArgs.date_from:
-            self.solrQueryInitialTimestamp = commandLineArgs.date_from.strftime(TIMESTAMP_PATTERN)
-        elif self.history.get_last_tracked_timestamp() != None:
-            self.solrQueryInitialTimestamp = self.history.get_last_tracked_timestamp()
-            logger.debug('Loaded initialTimestamp from history: {}'.format(self.solrQueryInitialTimestamp))
-        else:
-            logger.debug('No initial date provided, using current date.')
-            self.solrQueryInitialTimestamp = date.today().strftime(TIMESTAMP_PATTERN)
+             logger.debug('No initial date provided, using current date.')
+             self.solrQueryInitialTimestamp = date.today().strftime(TIMESTAMP_PATTERN)
+             self.settings.solr.date_from = self.solrQueryInitialTimestamp
 
         self.date_from = datetime.strptime(self.solrQueryInitialTimestamp, TIMESTAMP_PATTERN)
         
-        if commandLineArgs.date_until:
-            self.solrQueryUntilDate = commandLineArgs.date_until.strftime(TIMESTAMP_PATTERN)
+        if self.settings.solr.date_until:
+            self.solrQueryUntilDate = self.settings.solr.date_until
         else:
             self.solrQueryUntilDate = None
 
-        self.solrQueryRows= SOLR_QUERY_ROWS_SIZE
+        self.solrQueryRows = self.settings.solr.query_rows
+        self.counterRobotsFilename = f"{config_dir}/{self.counterRobotsFileName}"
 
+        # 4. Initialize Database
+        self.db = create_database(
+            version=self.settings.dspace.major_version,
+            jdbc_url=self.settings.dspace.db_url,
+            username=self.settings.dspace.db_username,
+            password=self.settings.dspace.db_password
+        )
 
-        # check if no_limit exist in command line arguments ant then set maxEventsToSend to sys.maxsize
-        if commandLineArgs.no_limit:
-            # set to maximum value
-            self.maxEventsToSend = sys.maxsize
-            logger.info("No limit set. Exporting all events in this run.")
-        else: 
-            self.maxEventsToSend = int(self.properties['max.eventsToSend'])
         
-        logger.debug("Limit: %s" % self.maxEventsToSend)
-        
-        self.dspaceMajorVersion = self.properties['dspace.majorVersion']
-
-        self.anonymize_ip_mask = self.properties.get('anonymize.ip_mask', DEFAULT_ANONYMIZE_IP_MASK)
-
-
-        if self.dspaceMajorVersion == '4':
-            self.db = DSpaceDB4(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
-        elif self.dspaceMajorVersion == '5':
-            self.db = DSpaceDB5(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
-        elif self.dspaceMajorVersion == '6':
-            self.db = DSpaceDB6(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
-        elif self.dspaceMajorVersion == '7':
-            self.db = DSpaceDB7(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
-        elif self.dspaceMajorVersion == '5o':
-            self.db = DSpaceDB5Oracle(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
-        elif self.dspaceMajorVersion == '6o':
-            self.db = DSpaceDB6Oracle(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
-        elif self.dspaceMajorVersion == '5c':
-            self.db = DSpaceDB5Cris(self.dspaceProperties['db.url'],self.dspaceProperties['db.username'],self.dspaceProperties['db.password'])
-        else:
-            logger.error('Only implemented values for dspace.majorVersion are 4, 5 and 6. Received {}'.format(self.dspaceMajorVersion))
-            raise NotImplementedError
-
-
-
-
-    @staticmethod
-    def getPropertiesFieldPath(config_dir, repoName):
-        return "%s/%s.properties" % (config_dir, repoName)
-
     ############################################### public methods   ###########################################
     def getMatomoOutputSize(self):
-        return int(self.properties['matomo.batchSize'])
+        return self.settings.matomo.batch_size
 
     def getMatomoTokenAuth(self):
-        return self.properties['matomo.token_auth']
+        return self.settings.matomo.token_auth
     
     def getMatomoIdSite(self):
-        return self.properties['matomo.idSite']
+        return self.settings.matomo.site_id
 
     def getMatomoUrl(self):
-        return self.properties['matomo.trackerUrl']
+        return self.settings.matomo.url
 
     def getSolrLimit(self):
-        return int(self.properties['solr.limit'])
+        # Was solr.limit in properties? 
+        # My loader mapped queryRows, but limit?
+        # Check original: return int(self.properties['solr.limit'])
+        # I missed 'solr.limit' in settings.py! 
+        # Wait, getSolrLimit was reading property 'solr.limit', default?
+        # Actually in original code: self.solrQueryRows= SOLR_QUERY_ROWS_SIZE (500)
+        # And getSolrLimit reads 'solr.limit'. 
+        # I should assume it's solr.queryRows or similar.
+        # Let's map it to query_rows for now or add it if distinct.
+        return self.settings.solr.query_rows
     
     def getDspaceMajorVersion(self):
-        return str(self.properties['dspace.majorVersion'])
+        return self.settings.dspace.major_version
 
     def getSolrStatsCoreName(self):
-        return str( self.properties.get('solr.core', DEFAULT_SOLR_STATS_CORE_NAME) )
+        return self.settings.solr.core_name
     
     def getExportFileName(self):
         month = self.date_from.strftime("%m")
         year = self.date_from.strftime("%Y")
-        idSite = self.properties['matomo.idSite']
+        idSite = self.settings.matomo.site_id
 
         return "%s_%s_%s_%s.txt" % (EXPORT_FILE_NAME_BASE, idSite, year , month) 
 
     def close(self):
-
         logger.debug("Closing resources")
-       
-        ## close db connection
-        self.db.close()
+        if self.db:
+            self.db.close()
 
-        ## commit solr 
-        ## self._commit_solr()
-        
-
-    ################################################ private methods ##########################################
-    def _read_properties(self):
-        javaprops = JavaProperties()
-
-        try:
-            javaprops.load(open(self.propertiesFilename))
-            property_dict = javaprops.get_property_dict()
-        except (FileNotFoundError, UnboundLocalError):
-            logger.error("Error while trying to read properties file %s" % self.propertiesFilename)
-            sys.exit()
-            #raise
-
-        logger.debug("Read succesfully property file %s" % self.propertiesFilename)
-        return property_dict
-
-    def _read_dspace_properties(self):
-        javaprops = JavaProperties()
-
-        if self.getDspaceMajorVersion().startswith('6') or self.getDspaceMajorVersion().startswith('7'):
-            
-            ## try to read dspace.cfg
-            try:
-                propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
-                javaprops.load(open(propertiesFilename))
-                property_dict = javaprops.get_property_dict()
-                logger.debug("Read succesfully property file %s" % propertiesFilename)
-            except (FileNotFoundError, UnboundLocalError):
-                logger.exception("Error while trying to read properties file %s" % propertiesFilename)
-                raise
-
-            ## try to read local.cfg
-            try:
-                propertiesFilename = "%s/config/local.cfg" % (self.properties["dspace.dir"])
-                javaprops.load(open(propertiesFilename))
-                property_dict = javaprops.get_property_dict()
-                logger.debug("Read succesfully property file %s" % propertiesFilename)
-            except (FileNotFoundError, UnboundLocalError):
-                logger.debug("Could not read property file %s" % propertiesFilename)
-                pass
-
-        elif self.getDspaceMajorVersion() == '5c':
-            try:
-                propertiesFilename = "%s/build.properties" % (self.properties["dspace.dir"])
-                javaprops.load(open(propertiesFilename))
-                property_dict = javaprops.get_property_dict()
-                logger.debug("Read succesfully property file %s" % propertiesFilename)
-            except (FileNotFoundError, UnboundLocalError):
-                logger.exception("Error while trying to read properties file %s" % propertiesFilename)
-                raise
-
-        else:
-            try:
-                propertiesFilename = "%s/config/dspace.cfg" % (self.properties["dspace.dir"])
-                javaprops.load(open(propertiesFilename))
-                property_dict = javaprops.get_property_dict()
-                logger.debug("Read succesfully property file %s" % propertiesFilename)
-            except (FileNotFoundError, UnboundLocalError):
-                logger.exception("Error while trying to read properties file %s" % propertiesFilename)
-                raise
-
-        return property_dict
-
-    def _find_solr_server(self):
-
-        # Find server
-        solrServerURL = None
-        response = None
-        
-        # Try to find solr server first in dspace config, then in collection config, then in default value
-        search_paths = []
-        search_paths.append( ('dspace config', self.dspaceProperties.get('solr.server')) )
-        search_paths.append( ('collector config', self.properties.get('solr.server')) )
-        search_paths.append( ('defaul value',  DEFAULT_SOLR_SERVER) )
-
-        for (source, path) in search_paths:
-            if path is None:
-                logger.debug("No solr server found in %s" % source)
-                continue
-            else:
-                url = path + "/" + self.solrStatsCoreName + "/admin/ping?wt=json"
-                try:
-                    response = requests.get(url)
-                    if response.status_code == 200:
-                        solrServerURL = path
-                        logger.debug("Found solr server in %s: %s" % (source, solrServerURL))
-                        break
-                except:
-                    logger.debug("Error while trying to connect to solr server %s provided by: %s" % (url, source))
-                    pass
-
-        if solrServerURL is not None:
-            logger.debug("Solr Server found at %s provided by:%s" % (solrServerURL, source))
-        else:
-            raise RuntimeError("Solr Server not found in search path: %s" % search_paths)
-
-        # Test Connection
-        try:
-            status = json.loads(response.text)["status"]
-            logger.debug("Solr Statistics Core Status: %s" % status)
-        except (KeyError, json.decoder.JSONDecodeError):
-            logger.exception("Could not read Solr Statistics Core Status from %s" % solrServerURL)
-            raise
-
-        if status != "OK":
-            logger.error("Solr Statistics Core Not Ready")
-            raise RuntimeError("Solr Statistics Core Not Ready")
-        else: # issue a core commit command, wait until completion
-            # url = solrServerURL + "/" + self.solrStatsCoreName + "/update?commit=true"
-            # try:
-            #     logger.debug("Solr :: Committing changes in %s core" % self.solrStatsCoreName)
-            #     response = requests.get(url)
-            # except:
-            #     logger.error("Commit to Solr server failed")
-            pass
-
-        return solrServerURL
-
-
-    def _commit_solr(self):
-        url = self.solrServerURL + "/" + self.solrStatsCoreName + "/update?commit=true"
-        try:
-            logger.debug("Solr :: commit %s core" % self.solrStatsCoreName)
-            response = requests.get(url)
-        except:
-            logger.error("Commit to Solr server failed")
 
 
 

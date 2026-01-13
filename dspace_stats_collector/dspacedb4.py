@@ -1,23 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Dspace DB components """
+""" DSpace 4 DB components """
 
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 try:
     from .dspacedb import DSpaceDB
-except Exception: #ImportError
+except ImportError:
     from dspacedb import DSpaceDB
 
+
 class DSpaceDB4(DSpaceDB):
+    """Database connector for DSpace 4.x (PostgreSQL)."""
 
-    def __init__(self, jdbcUrl, username, password):
-
-        DSpaceDB.__init__(self,jdbcUrl, username, password)
-      
+    def __init__(self, jdbc_url: str, username: str, password: str) -> None:
+        # Define SQL templates before calling parent __init__
+        # Use :param syntax for SQLAlchemy text().bindparams()
+        # NOTE: The download query appears to have a hardcoded bitstream_id=3
+        # which may be a bug in the original implementation
         self._queryDownloadSQL = """
-           SELECT C.bitstream_id as id, record_title, handle, is_download, owning_item, sequence_id, filename FROM
+            SELECT C.bitstream_id as id, record_title, handle, is_download, owning_item, sequence_id, filename FROM
             (SELECT mv.item_id AS id,
             mv.text_value AS record_title,
             h.handle AS handle,
@@ -36,9 +39,10 @@ class DSpaceDB4(DSpaceDB):
             item2bundle AS i
             WHERE bb.bitstream_id = b.bitstream_id
             AND i.bundle_id = bb.bundle_id
-            AND b.bitstream_id = 3) AS C
-            ON A.id = C.item_id;
-            """
+            AND b.bitstream_id = :bitstreamId) AS C
+            ON A.id = C.item_id
+        """
+        
         self._queryItemSQL = """
             SELECT mv.item_id AS id,
                     mv.text_value AS record_title,
@@ -49,21 +53,23 @@ class DSpaceDB4(DSpaceDB):
                     NULL AS filename
             FROM metadatavalue AS mv
             RIGHT JOIN handle AS h ON h.resource_id = mv.item_id
-            WHERE metadata_field_id = {dcTitleId}
-                AND h.resource_type_id=2
-                AND mv.item_id = {itemId};
-            """
-
-        self._queryTitleSQL = """
-        SELECT metadata_field_id AS "dcTitleId"
-             FROM metadatafieldregistry mfr,
-                  metadataschemaregistry msr
-             WHERE mfr.metadata_schema_id = msr.metadata_schema_id
-               AND short_id = 'dc'
-               AND element = 'title'
-               AND qualifier IS NULL;
+            WHERE metadata_field_id = :dcTitleId
+                AND h.resource_type_id = 2
+                AND mv.item_id = :itemId
         """
 
-        self._dcTitleId = self.getDcTitleId()
+        self._queryTitleSQL = """
+            SELECT metadata_field_id AS "dcTitleId"
+            FROM metadatafieldregistry mfr,
+                 metadataschemaregistry msr
+            WHERE mfr.metadata_schema_id = msr.metadata_schema_id
+              AND short_id = 'dc'
+              AND element = 'title'
+              AND qualifier IS NULL
+        """
 
-       
+        # Call parent constructor
+        super().__init__(jdbc_url, username, password)
+        
+        # Get DC Title ID after connection is established
+        self._dcTitleId = self.getDcTitleId()

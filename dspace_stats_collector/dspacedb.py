@@ -1,108 +1,158 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Dspace DB components """
+""" DSpace DB components """
 
 import logging
-logger = logging.getLogger()
+from typing import Dict, Optional, Any
 
 import sqlalchemy
+from sqlalchemy import text
+from sqlalchemy.engine import Engine, Connection
 import re
 import pandas as pd
 
+logger = logging.getLogger(__name__)
+
 
 class DSpaceDB:
+    """
+    Base class for DSpace database connectors.
+    
+    Provides methods to query item and bitstream information from the DSpace database.
+    Uses parameterized queries to prevent SQL injection.
+    """
 
-    def __init__(self, jdbcUrl, username, password):
+    def __init__(self, jdbc_url: str, username: str, password: str) -> None:
+        """
+        Initialize database connection.
         
+        Args:
+            jdbc_url: JDBC connection string (postgres or oracle)
+            username: Database username
+            password: Database password
+        """
+        self._engine: Engine = self._create_engine(jdbc_url, username, password)
+        self._conn: Connection = self._engine.connect()
+        
+        # Cache for resource lookups
+        self._cache: Dict[str, Dict[str, Any]] = {}
+        
+        logger.debug('DB Connection established successfully.')
+
+    def _create_engine(self, jdbc_url: str, username: str, password: str) -> Engine:
+        """Parse JDBC URL and create SQLAlchemy engine."""
         # Parse jdbc url
         # Postgres template: jdbc:postgresql://localhost:5432/dspace
         # Oracle template: jdbc:oracle:thin:@//localhost:1521/xe
         # Oracle template: jdbc:oracle:thin:@localhost:1521:xe
-        m = re.match("^jdbc:(postgresql|oracle):[^\/|^@]*[@\/\/|\/\/|@]*([^:]+):(\d+)(\/|:)(.*)$", jdbcUrl)
+        pattern = r"^jdbc:(postgresql|oracle):[^\/|^@]*[@\/\/|\/\/|@]*([^:]+):(\d+)(\/|:)(.*)$"
+        match = re.match(pattern, jdbc_url)
 
-        if m is None:
-            logger.error("Could not parse db.url string: %s" % jdbcUrl)
-            raise ValueError
+        if match is None:
+            logger.error("Could not parse db.url string: %s", jdbc_url)
+            raise ValueError(f"Invalid JDBC URL format: {jdbc_url}")
 
-        # separate host, port, dbname, and dbschema and separator 
-        (engine, hostname, port, separator, database) = m.group(1, 2, 3, 4, 5)
+        engine, hostname, port, separator, database = match.group(1, 2, 3, 4, 5)
 
-        # Create connection string depending on engine
+        # Build SQLAlchemy connection string
         if engine == 'postgresql':
-            connStringTemplate = 'postgresql://{username}:{password}@{hostname}:{port}' + separator + '{database}'
-        if engine == 'oracle':
+            conn_string = f'postgresql://{username}:{password}@{hostname}:{port}{separator}{database}'
+        elif engine == 'oracle':
             if separator == ':':
-                connStringTemplate = 'oracle+cx_oracle://{username}:{password}@{hostname}:{port}/?service_name={database}'
-            elif separator == '/':
-                connStringTemplate = 'oracle+cx_oracle://{username}:{password}@{hostname}:{port}/{database}'
+                conn_string = f'oracle+cx_oracle://{username}:{password}@{hostname}:{port}/?service_name={database}'
+            else:  # separator == '/'
+                conn_string = f'oracle+cx_oracle://{username}:{password}@{hostname}:{port}/{database}'
+        else:
+            raise ValueError(f"Unsupported database engine: {engine}")
 
-       
-        # Create connection string based on engine, hostname, port, database. Use separator to determine the kind of oracle connection
-        self.connString = connStringTemplate.format(
-                engine=engine,
-                username=username,
-                password=password,
-                hostname=hostname,
-                port=port,
-                database=database,
-        )
-
-        logger.debug('DB Connection String: ' + self.connString)
+        logger.debug('Creating DB engine for: %s@%s:%s/%s', engine, hostname, port, database)
+        
         try:
-            self.conn = sqlalchemy.create_engine(self.connString).connect()
-            logger.debug('DB Connection established successfully.')
+            return sqlalchemy.create_engine(
+                conn_string,
+                pool_pre_ping=True,  # Verify connection health
+                pool_recycle=3600,   # Recycle connections after 1 hour
+            )
         except sqlalchemy.exc.OperationalError:
             logger.exception("Could not connect to DB.")
             raise
 
-        self._dfResources = pd.DataFrame(columns=['id', 'record_title', 'handle', 'is_download', 'owning_item', 'sequence_id', 'filename']).set_index('id')
-
-
-    def getDcTitleId(self):
-        
-        dfRecord = pd.read_sql(self._queryTitleSQL, self.conn)
-        if len(dfRecord) != 1:
+    def getDcTitleId(self) -> int:
+        """Get the metadata field ID for dc.title."""
+        result = pd.read_sql(text(self._queryTitleSQL), self._conn)
+        if len(result) != 1:
             logger.error('Could not recover DC Title metadata field id from db')
-            raise RuntimeError
-        dcTitleId = dfRecord.dcTitleId[0]
-        return dcTitleId
+            raise RuntimeError('DC Title field not found in database')
+        return int(result.iloc[0]['dcTitleId'])
 
+    def queryDownload(self, bitstream_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Query download information for a bitstream.
+        
+        Args:
+            bitstream_id: The bitstream identifier
+            
+        Returns:
+            Dictionary with resource info or None if not found
+        """
+        cache_key = f"download_{bitstream_id}"
+        
+        if cache_key in self._cache:
+            return self._cache[cache_key]
 
-    def queryDownload(self, bitstreamId): #, owningItem):
+        # Use parameterized query to prevent SQL injection
+        sql = text(self._queryDownloadSQL).bindparams(
+            dcTitleId=self._dcTitleId,
+            bitstreamId=bitstream_id
+        )
+        
+        result = pd.read_sql(sql, self._conn)
+        
+        if len(result) != 1:
+            logger.debug('Could not recover data for bitstream %s from db', bitstream_id)
+            return None
+            
+        logger.debug('Successfully recovered data for bitstream %s from db', bitstream_id)
+        record = result.iloc[0].to_dict()
+        self._cache[cache_key] = record
+        return record
 
-        if bitstreamId not in self._dfResources.index.values:
-            SQL = self._queryDownloadSQL.format(
-                    dcTitleId = self._dcTitleId,
-                    bitstreamId = bitstreamId
-            )
-            dfRecord = pd.read_sql(SQL, self.conn).set_index('id')
-            if len(dfRecord) != 1:
-                logger.debug('Could not recover data for bitstream {} from db'.format(bitstreamId))
-                return None
-#            if dfRecord.loc[bitstreamId, 'owning_item'] != owningItem and not(type(owningItem) == list and dfRecord.loc[bitstreamId, 'owning_item'] == owningItem[0]): # DSpace 6 logs owningItem as a 1-element array in SOLR
-#                logger.debug('Owning Item mismatch for bitstream {} from db ({}, {})'.format(bitstreamId, dfRecord.loc[bitstreamId, 'owning_item'], owningItem[0]))
-#                return None
-            logger.debug('Successfully recovered data for bitstream {} from db'.format(bitstreamId))
-            self._dfResources = self._dfResources.append(dfRecord)
+    def queryItem(self, item_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Query information for an item.
+        
+        Args:
+            item_id: The item identifier
+            
+        Returns:
+            Dictionary with resource info or None if not found
+        """
+        cache_key = f"item_{item_id}"
+        
+        if cache_key in self._cache:
+            return self._cache[cache_key]
 
-        return self._dfResources.loc[bitstreamId].to_dict()
+        # Use parameterized query to prevent SQL injection
+        sql = text(self._queryItemSQL).bindparams(
+            dcTitleId=self._dcTitleId,
+            itemId=item_id
+        )
+        
+        result = pd.read_sql(sql, self._conn)
+        
+        if len(result) != 1:
+            logger.debug('Could not recover data for item %s from db', item_id)
+            return None
+            
+        logger.debug('Successfully recovered data for item %s from db', item_id)
+        record = result.iloc[0].to_dict()
+        self._cache[cache_key] = record
+        return record
 
-    def queryItem(self, itemId):
-    
-        if itemId not in self._dfResources.index.values:
-            SQL = self._queryItemSQL.format(
-                    dcTitleId = self._dcTitleId,
-                    itemId = itemId
-            )
-            dfRecord = pd.read_sql(SQL, self.conn).set_index('id')
-            if len(dfRecord) != 1:
-                logger.debug('Could not recover data for item {} from db'.format(itemId))
-                return None
-            logger.debug('Successfully recovered data for item {} from db'.format(itemId))
-            self._dfResources = self._dfResources.append(dfRecord)
-        return self._dfResources.loc[itemId].to_dict()
-
-    def close(self):
+    def close(self) -> None:
+        """Close the database connection."""
         logger.debug("Closing dspace db connection")
-        self.conn.close()
+        self._conn.close()
+        self._engine.dispose()
+
 
