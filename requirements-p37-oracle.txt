@@ -22,5 +22,4 @@ pytz==2018.7
 python-crontab
 anonymizeip
 pid
-cx-Oracle
-
+tenacity

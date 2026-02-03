@@ -2,9 +2,10 @@
 
 """Top-level package for Dspace usage stats collector."""
 
+from .version import __version__
+
 __author__ = """LA Referencia"""
 __email__ = 'lareferencia.dev@gmail.com'
-__version__ = '0.1.2'
 
 __name__ = "dspace_stats_collector"
 __package__ = "dspace_stats_collector"

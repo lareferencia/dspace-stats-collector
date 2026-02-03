@@ -87,7 +87,7 @@ def main():
     # create config dir if not exists
     if not os.path.exists(args.config_dir) :
         print("Creating config dir %s" % (args.config_dir)) 
-        os.mkdir(args.config_dir)
+        os.makedirs(args.config_dir, exist_ok=True)
     else:
         print("Config dir %s found!" % (args.config_dir)) 
 
@@ -143,4 +143,3 @@ def parse_args():
 
 if __name__ == "__main__":
     main()
-

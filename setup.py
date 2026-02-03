@@ -4,12 +4,20 @@
 """The setup script."""
 
 from setuptools import setup, find_packages
+from pathlib import Path
+import re
 
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
+
+version_file = Path("dspace_stats_collector/version.py").read_text(encoding="utf-8")
+version_match = re.search(r'__version__\s*=\s*"([^"]+)"', version_file)
+if version_match is None:
+    raise RuntimeError("Could not find __version__ in dspace_stats_collector/version.py")
+package_version = version_match.group(1)
 
 requirements = [
     'requests',
@@ -68,6 +76,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/lareferencia/dspace-stats-collector',
-    version='0.7.8',
+    version=package_version,
     zip_safe=False,
 )

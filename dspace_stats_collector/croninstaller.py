@@ -59,13 +59,25 @@ def parse_args():
 
     parser.add_argument("-u",
                         "--user_cron",
-                        help="Current user cron (True) / System cron (False)",
+                        dest="user_cron",
+                        help="Use current user cron (default)",
+                        action="store_true",
                         default=True)
+    parser.add_argument("--system_cron",
+                        dest="user_cron",
+                        help="Use system cron instead of current user cron",
+                        action="store_false")
 
     parser.add_argument("-d",
                         "--delete_old_entries",
-                        help="Delete old entries of the same command",
+                        dest="delete_old_entries",
+                        help="Delete old entries of the same command (default)",
+                        action="store_true",
                         default=True)
+    parser.add_argument("--keep_old_entries",
+                        dest="delete_old_entries",
+                        help="Keep old entries of the same command",
+                        action="store_false")
     
     parser.add_argument("-m",
                         "--run_every_m_minutes",
@@ -84,4 +96,3 @@ def parse_args():
 
 if __name__ == "__main__":
     main()
-

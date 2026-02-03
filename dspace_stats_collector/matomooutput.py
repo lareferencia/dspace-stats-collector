@@ -287,8 +287,6 @@ class MatomoBufferedSender:
             logger.debug("No non-robot events to send")
             return last_timestamp
 
-        self._total_sent += len(request_list)
-
         try:
             payload = {
                 'requests': request_list,
@@ -309,7 +307,8 @@ class MatomoBufferedSender:
                 raise MatomoInternalServerException(
                     f"Matomo error: {response.text}"
                 )
-                
+            
+            self._total_sent += len(request_list)
             logger.debug("Successfully sent %d events to Matomo", len(request_list))
 
         except requests.exceptions.HTTPError as e:
