@@ -7,7 +7,12 @@ import os
 from unittest.mock import MagicMock, patch
 from dspace_stats_collector.config.history import History
 from dspace_stats_collector.config.loader import ConfigLoader
-from dspace_stats_collector.config.settings import CollectorSettings
+from dspace_stats_collector.config.settings import (
+    CollectorSettings,
+    MatomoSettings,
+    SolrSettings,
+    DSpaceSettings,
+)
 from dspace_stats_collector.configcontext import ConfigurationContext
 
 class TestHistory:
@@ -134,3 +139,58 @@ class TestConfigurationContextFacade:
         # Check initialization
         mock_loader.load_settings.assert_called_once()
         mock_history.assert_called_once()
+
+    @patch('dspace_stats_collector.configcontext.ConfigLoader')
+    @patch('dspace_stats_collector.configcontext.History')
+    @patch('dspace_stats_collector.configcontext.create_database')
+    def test_exposes_legacy_compatibility_dicts(self, mock_create_db, mock_history, mock_loader_cls):
+        mock_loader = mock_loader_cls.return_value
+        mock_history.return_value.get_last_tracked_timestamp.return_value = None
+
+        settings = CollectorSettings(
+            matomo=MatomoSettings(
+                url='https://matomo.example.com/matomo.php',
+                token_auth='token',
+                site_id='7',
+                repository_id='repo-abc',
+                country_iso='US',
+                verify_ssl=True,
+            ),
+            solr=SolrSettings(
+                server_url='http://localhost:8983/solr',
+                core_name='statistics',
+                query_rows=10,
+                date_from=None,
+                date_until=None,
+            ),
+            dspace=DSpaceSettings(
+                install_dir='/opt/dspace',
+                major_version='6',
+                db_url='jdbc:postgresql://localhost:5432/dspace',
+                db_username='dspace',
+                db_password='dspace',
+                canonical_prefix='http://hdl.handle.net/',
+                hostname='dspace.example.com',
+                url='http://dspace.example.com',
+                server_url='http://dspace.example.com/server',
+                ui_url='http://dspace.example.com/ui',
+            ),
+            repo_properties={},
+            dspace_properties={},
+        )
+        mock_loader.load_settings.return_value = settings
+
+        mock_args = MagicMock()
+        mock_args.config_dir = '/tmp'
+        mock_args.date_from = None
+        mock_args.date_until = None
+
+        ctx = ConfigurationContext('repo', mock_args)
+
+        assert ctx.properties['matomo.idSite'] == '7'
+        assert ctx.properties['matomo.repositoryId'] == 'repo-abc'
+        assert ctx.dspaceProperties['dspace.hostname'] == 'dspace.example.com'
+        assert ctx.getMatomoVerifySSL() is True
+
+    def test_get_properties_field_path(self):
+        assert ConfigurationContext.getPropertiesFieldPath('/config', 'repo') == '/config/repo.properties'

@@ -4,6 +4,7 @@
 
 import pytest
 from unittest.mock import MagicMock
+from types import SimpleNamespace
 from dspace_stats_collector.matomooutput import MatomoFilter
 from dspace_stats_collector.eventpipeline import Event
 
@@ -100,3 +101,34 @@ class TestMatomoFilter:
         # In the code: oai:{dspaceHostname}:{handle}
         # For DSpace 7 code sets dspaceHostname = dspace.server.url
         assert '"oaipmhID", "oai:https://api.dspace.org:12345/6789"' in params['cvar']
+
+    def test_run_with_typed_settings_context(self, sample_event):
+        """MatomoFilter works when only typed settings are available."""
+        settings = SimpleNamespace(
+            dspace=SimpleNamespace(
+                canonical_prefix='http://hdl.handle.net/',
+                hostname='dspace.example.com',
+                url='http://dspace.example.com',
+                server_url='http://dspace.example.com/server',
+                ui_url='http://dspace.example.com/ui',
+            ),
+            matomo=SimpleNamespace(
+                site_id='1',
+                rec='1',
+                repository_id='repo123',
+                country_iso='US',
+                token_auth='auth_token_123',
+            ),
+        )
+        context = SimpleNamespace(
+            settings=settings,
+            getDspaceMajorVersion=lambda: '6',
+        )
+
+        matomo_filter = MatomoFilter(context)
+        processed = list(matomo_filter.run([sample_event]))
+
+        assert len(processed) == 1
+        params = processed[0]._matomoParams
+        assert params['idsite'] == '1'
+        assert params['token_auth'] == 'auth_token_123'

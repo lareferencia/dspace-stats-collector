@@ -27,7 +27,7 @@ class History:
             with open(self.filename) as f:
                 self.javaprops.load(f)
             self.property_dict = self.javaprops.get_property_dict()
-            logger.debug("Read succesfully history file %s" % self.filename)
+            logger.debug("Read successfully history file %s" % self.filename)
         except (FileNotFoundError, UnboundLocalError):
             logger.debug("History file %s does not exist. Creating one..." % self.filename)
 

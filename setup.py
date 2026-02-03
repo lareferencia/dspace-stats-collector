@@ -11,10 +11,20 @@ with open('README.md') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-#with open('requirements.txt') as required_file:
-#    requirements = required_file.read().splitlines()
-
-requirements = []
+requirements = [
+    'requests',
+    'pyjavaprops',
+    'SQLAlchemy',
+    'psycopg2-binary',
+    'pysolr',
+    'pandas',
+    'urllib3',
+    'pytz',
+    'python-crontab',
+    'anonymizeip',
+    'pid',
+    'tenacity',
+]
 
 setup_requirements = ['pytest-runner', ]
 
@@ -51,7 +61,7 @@ setup(
     include_package_data=True,
     keywords='dspace_stats_collector',
     name='dspace_stats_collector',
-    packages=find_packages(include=['dspace_stats_collector']),
+    packages=find_packages(include=['dspace_stats_collector*']),
     entry_points=entry_points,
  #   package_data=package_data,
     setup_requires=setup_requirements,

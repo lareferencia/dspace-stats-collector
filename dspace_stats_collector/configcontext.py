@@ -35,6 +35,10 @@ class ConfigurationContext:
     defaultOuputLimit = DEFAULT_OUPUT_LIMIT
     counterRobotsFileName = COUNTER_ROBOTS_FILE
 
+    @staticmethod
+    def getPropertiesFieldPath(config_dir, repo_name):
+        return f"{config_dir}/{repo_name}.properties"
+
     def __init__(self, repoName, commandLineArgs):
         self.repoName = repoName
         
@@ -55,6 +59,25 @@ class ConfigurationContext:
         self.dspaceMajorVersion = self.settings.dspace.major_version
         self.maxEventsToSend = self.settings.max_events
         self.anonymize_ip_mask = self.settings.anonymize_ip_mask
+
+        # Legacy compatibility attributes used by pipeline stages.
+        repo_properties = getattr(self.settings, 'repo_properties', None)
+        self.properties = dict(repo_properties) if isinstance(repo_properties, dict) else {}
+        dspace_properties = getattr(self.settings, 'dspace_properties', None)
+        self.dspaceProperties = dict(dspace_properties) if isinstance(dspace_properties, dict) else {}
+
+        self.properties.setdefault('matomo.idSite', self.settings.matomo.site_id)
+        self.properties.setdefault('matomo.rec', self.settings.matomo.rec)
+        self.properties.setdefault('matomo.token_auth', self.settings.matomo.token_auth)
+        self.properties.setdefault('matomo.repositoryId', self.settings.matomo.repository_id or self.repoName)
+        self.properties.setdefault('matomo.countryISO', self.settings.matomo.country_iso or "")
+        self.properties.setdefault('matomo.verifySSL', str(self.settings.matomo.verify_ssl).lower())
+
+        self.dspaceProperties.setdefault('handle.canonical.prefix', self.settings.dspace.canonical_prefix)
+        self.dspaceProperties.setdefault('dspace.hostname', self.settings.dspace.hostname)
+        self.dspaceProperties.setdefault('dspace.url', self.settings.dspace.url)
+        self.dspaceProperties.setdefault('dspace.server.url', self.settings.dspace.server_url)
+        self.dspaceProperties.setdefault('dspace.ui.url', self.settings.dspace.ui_url)
         
         self.solrStatsCoreName = self.settings.solr.core_name
         self.solrServerURL = self.settings.solr.server_url
@@ -109,6 +132,9 @@ class ConfigurationContext:
 
     def getMatomoTokenAuth(self):
         return self.settings.matomo.token_auth
+
+    def getMatomoVerifySSL(self):
+        return self.settings.matomo.verify_ssl
     
     def getMatomoIdSite(self):
         return self.settings.matomo.site_id
@@ -145,7 +171,6 @@ class ConfigurationContext:
         logger.debug("Closing resources")
         if self.db:
             self.db.close()
-
 
 
 

@@ -14,10 +14,10 @@ import pysolr
 
 try:
     from .eventpipeline import Event
+    from .config.history import TIMESTAMP_PATTERN
 except Exception: #ImportError
     from eventpipeline import Event
-
-TIMESTAMP_PATTERN = "%Y-%m-%dT%H:%M:%S.%fZ"
+    from config.history import TIMESTAMP_PATTERN
 
 class SolrTimestampCursor(object):
     

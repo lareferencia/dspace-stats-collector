@@ -63,7 +63,17 @@ class MatomoFilter(PipelineFilter):
     """
 
     def __init__(self, config_context) -> None:
-        dspace_properties = config_context.dspaceProperties
+        dspace_properties = getattr(config_context, "dspaceProperties", None)
+        if not isinstance(dspace_properties, dict):
+            settings = getattr(config_context, "settings", None)
+            dspace_settings = getattr(settings, "dspace", None)
+            dspace_properties = {
+                'handle.canonical.prefix': getattr(dspace_settings, 'canonical_prefix', 'http://hdl.handle.net/'),
+                'dspace.hostname': getattr(dspace_settings, 'hostname', None),
+                'dspace.url': getattr(dspace_settings, 'url', None),
+                'dspace.server.url': getattr(dspace_settings, 'server_url', None),
+                'dspace.ui.url': getattr(dspace_settings, 'ui_url', None),
+            }
 
         self._handle_canonical_prefix = dspace_properties.get(
             'handle.canonical.prefix', 
@@ -77,7 +87,18 @@ class MatomoFilter(PipelineFilter):
             self._dspace_hostname = dspace_properties['dspace.hostname']
             self._dspace_url = dspace_properties['dspace.url']
 
-        self._repo_properties = config_context.properties
+        repo_properties = getattr(config_context, "properties", None)
+        if not isinstance(repo_properties, dict):
+            settings = getattr(config_context, "settings", None)
+            matomo_settings = getattr(settings, "matomo", None)
+            repo_properties = {
+                'matomo.idSite': getattr(matomo_settings, 'site_id', None),
+                'matomo.rec': getattr(matomo_settings, 'rec', "1"),
+                'matomo.repositoryId': getattr(matomo_settings, 'repository_id', None),
+                'matomo.countryISO': getattr(matomo_settings, 'country_iso', None),
+                'matomo.token_auth': getattr(matomo_settings, 'token_auth', None),
+            }
+        self._repo_properties = repo_properties
 
     def run(self, events: Iterator[Event]) -> Iterator[Event]:
         """Transform events to Matomo tracking format."""
@@ -92,14 +113,14 @@ class MatomoFilter(PipelineFilter):
     def _build_params(self, event: Event) -> Dict[str, Any]:
         """Build Matomo tracking parameters from event."""
         params = {
-            'idsite': self._repo_properties['matomo.idSite'],
-            'rec': self._repo_properties['matomo.rec'],
+            'idsite': self._repo_properties.get('matomo.idSite'),
+            'rec': self._repo_properties.get('matomo.rec', "1"),
             'action_name': event._db['record_title'],
             '_id': event._sess['id'],
             'rand': random.randint(100000, 1000000),
             'apiv': 1,
             'ua': event._src['userAgent'],
-            'token_auth': self._repo_properties['matomo.token_auth'],
+            'token_auth': self._repo_properties.get('matomo.token_auth'),
             'cip': event._src.get('ip', '0.0.0.0'),
         }
 
@@ -111,8 +132,8 @@ class MatomoFilter(PipelineFilter):
         oai_id = f"oai:{self._dspace_hostname}:{event._db['handle']}"
         params['cvar'] = json.dumps({
             "1": ["oaipmhID", oai_id],
-            "2": ["repositoryID", self._repo_properties['matomo.repositoryId']],
-            "3": ["countryID", self._repo_properties['matomo.countryISO']]
+            "2": ["repositoryID", self._repo_properties.get('matomo.repositoryId', '')],
+            "3": ["countryID", self._repo_properties.get('matomo.countryISO', '')]
         })
 
         # URL based on type (download vs view)
@@ -184,6 +205,10 @@ class MatomoBufferedSender:
         self._total_sent: int = 0
         self._url: str = config_context.getMatomoUrl()
         self._token_auth: str = config_context.getMatomoTokenAuth()
+        try:
+            self._verify_ssl = bool(config_context.getMatomoVerifySSL())
+        except AttributeError:
+            self._verify_ssl = True
         
         # HTTP session for connection reuse
         self._session: requests.Session = requests.Session()
@@ -274,7 +299,7 @@ class MatomoBufferedSender:
                 self._url,
                 data=json.dumps(payload),
                 timeout=30,
-                verify=False  # TODO: Make this configurable
+                verify=self._verify_ssl
             )
             response.raise_for_status()
             
@@ -389,4 +414,3 @@ class MatomoOutput(PipelineOutput):
             self._sender.total_sent,
             robot_count
         )
-

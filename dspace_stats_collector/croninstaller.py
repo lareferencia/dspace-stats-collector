@@ -10,7 +10,7 @@ import argparse
 
 try:
     from .configcontext import ConfigurationContext
-except Exception: #ImportError
+except ImportError:
     from configcontext import ConfigurationContext
 
 from crontab import CronTab

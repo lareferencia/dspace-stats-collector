@@ -13,44 +13,44 @@ from datetime import datetime, timedelta
 
 try:
     from .configcontext import ConfigurationContext
-except Exception: #ImportError
+except ImportError:
     from configcontext import ConfigurationContext
 
 try:
     from .eventpipeline import *
-except Exception: #ImportError
+except ImportError:
     from eventpipeline import *
 
 try:
     from .solrinput import SolrStatisticsInput
-except Exception: #ImportError
+except ImportError:
     from solrinput import SolrStatisticsInput
 
 try:
     from .dspacefilter import DSpaceDBFilter
-except Exception: #ImportError
+except ImportError:
     from dspacefilter import DSpaceDBFilter
 
 try:
     from .sessionfilter import SimpleHashSessionFilter
-except Exception: #ImportError
+except ImportError:
     from sessionfilter import SimpleHashSessionFilter
 
 try:
     from .matomooutput import MatomoFilter
-except Exception: #ImportError
-   from matomooutput import MatomoFilter
+except ImportError:
+    from matomooutput import MatomoFilter
 
 try:
     from .fileoutput import FileOutput
-except Exception: #ImportError
-   from fileoutput import FileOutput
+except ImportError:
+    from fileoutput import FileOutput
 
 
 try:
     from .counterfilter import COUNTERRobotsFilter
-except Exception: #ImportError
-   from counterfilter import COUNTERRobotsFilter
+except ImportError:
+    from counterfilter import COUNTERRobotsFilter
 
 
 DESCRIPTION = """

@@ -3,7 +3,7 @@
 """Typed configuration settings."""
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 @dataclass
@@ -11,9 +11,11 @@ class MatomoSettings:
     url: str
     token_auth: str
     site_id: str
+    repository_id: Optional[str] = None
     batch_size: int = 50
     rec: str = "1"
     country_iso: Optional[str] = None
+    verify_ssl: bool = True
 
 
 @dataclass
@@ -46,3 +48,5 @@ class CollectorSettings:
     dspace: DSpaceSettings
     max_events: int = 100
     anonymize_ip_mask: str = "255.255.255.255"
+    repo_properties: Dict[str, Any] = field(default_factory=dict)
+    dspace_properties: Dict[str, Any] = field(default_factory=dict)

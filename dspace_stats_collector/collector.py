@@ -14,38 +14,38 @@ import pid
 
 try:
     from .configcontext import ConfigurationContext
-except Exception: #ImportError
+except ImportError:
     from configcontext import ConfigurationContext
 
 try:
     from .eventpipeline import *
-except Exception: #ImportError
+except ImportError:
     from eventpipeline import *
 
 try:
     from .solrinput import SolrStatisticsInput
-except Exception: #ImportError
+except ImportError:
     from solrinput import SolrStatisticsInput
 
 try:
     from .dspacefilter import DSpaceDBFilter
-except Exception: #ImportError
+except ImportError:
     from dspacefilter import DSpaceDBFilter
 
 try:
     from .sessionfilter import SimpleHashSessionFilter
-except Exception: #ImportError
+except ImportError:
     from sessionfilter import SimpleHashSessionFilter
 
 try:
     from .matomooutput import MatomoFilter, MatomoOutput, MatomoOfflineException
-except Exception: #ImportError
-   from matomooutput import MatomoFilter, MatomoOutput, MatomoBulkOutput
+except ImportError:
+    from matomooutput import MatomoFilter, MatomoOutput, MatomoOfflineException
 
 try:
     from .counterfilter import COUNTERRobotsFilter
-except Exception: #ImportError
-   from counterfilter import COUNTERRobotsFilter
+except ImportError:
+    from counterfilter import COUNTERRobotsFilter
 
 
 DESCRIPTION = """
@@ -154,7 +154,7 @@ def run():
     configContext.close()
 
 
-    logger.debug("Repo succesfully processed: %s on: %s " % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S")) )
+    logger.debug("Repo successfully processed: %s on: %s " % (repoName, datetime.now().strftime("%Y-%m-%d %H:%M:%S")) )
 
 def parse_args():
 

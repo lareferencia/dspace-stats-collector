@@ -43,9 +43,11 @@ class ConfigLoader:
             url=props['matomo.trackerUrl'],
             token_auth=props['matomo.token_auth'],
             site_id=props['matomo.idSite'],
+            repository_id=props.get('matomo.repositoryId'),
             batch_size=int(props.get('matomo.batchSize', 50)),
             rec=props.get('matomo.rec', "1"),
-            country_iso=props.get('matomo.countryISO')
+            country_iso=props.get('matomo.countryISO'),
+            verify_ssl=self._parse_bool(props.get('matomo.verifySSL', True))
         )
 
         # Solr Logic
@@ -94,8 +96,17 @@ class ConfigLoader:
             solr=solr_settings,
             dspace=dspace_settings,
             max_events=max_events,
-            anonymize_ip_mask=props.get('anonymize.ip_mask', DEFAULT_ANONYMIZE_IP_MASK)
+            anonymize_ip_mask=props.get('anonymize.ip_mask', DEFAULT_ANONYMIZE_IP_MASK),
+            repo_properties=dict(props),
+            dspace_properties=dict(dspace_props),
         )
+
+    def _parse_bool(self, value) -> bool:
+        if isinstance(value, bool):
+            return value
+        if value is None:
+            return False
+        return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
     def _read_properties(self, filename: str) -> dict:
         javaprops = JavaProperties()

@@ -16,7 +16,7 @@ from string import Template
 
 try:
     from .configcontext import ConfigurationContext
-except Exception: #ImportError
+except ImportError:
     from configcontext import ConfigurationContext
 
 

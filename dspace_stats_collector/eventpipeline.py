@@ -152,3 +152,4 @@ class EventPipeline:
         except Exception as e:
             logger.error('A fatal exception occurred processing events: %s', e)
             traceback.print_exc()
+            raise
