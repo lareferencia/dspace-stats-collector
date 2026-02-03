@@ -286,6 +286,8 @@ QUERY_REGISTRY = {
     '6': QUERIES_V6,
     '6o': QUERIES_V6_ORACLE,  # DSpace 6 Oracle
     '7': QUERIES_V7,
+    '8': QUERIES_V7,  # DSpace 8 uses same schema as 7
+    '9': QUERIES_V7,  # DSpace 9 uses same schema as 7
 }
 
 
@@ -294,7 +296,7 @@ def get_queries(version: str) -> DSpaceQueries:
     Get SQL queries for a specific DSpace version.
     
     Args:
-        version: DSpace version string ('4', '5', '5c', '5o', '6', '6o', '7')
+        version: DSpace version string ('4', '5', '5c', '5o', '6', '6o', '7', '8', '9')
         
     Returns:
         DSpaceQueries dataclass with download, item, and title queries

@@ -80,7 +80,7 @@ class MatomoFilter(PipelineFilter):
             'http://hdl.handle.net/'
         )
             
-        if config_context.getDspaceMajorVersion() == '7':
+        if config_context.getDspaceMajorVersion() in ('7', '8', '9'):
             self._dspace_hostname = dspace_properties['dspace.server.url']
             self._dspace_url = dspace_properties['dspace.ui.url']
         else:

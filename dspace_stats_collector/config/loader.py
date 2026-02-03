@@ -127,7 +127,7 @@ class ConfigLoader:
 
         # Define potential config paths based on logic in original configcontext
         paths = []
-        if version.startswith('6') or version.startswith('7'):
+        if version in ('6', '7', '8', '9'):
             paths.append(f"{dspace_dir}/config/dspace.cfg")
             paths.append(f"{dspace_dir}/config/local.cfg")
         elif version == '5c':

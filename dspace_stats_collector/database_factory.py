@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 # Type alias for supported DSpace versions
-DSpaceVersion = Literal['4', '5', '5c', '5o', '6', '6o', '7']
+DSpaceVersion = Literal['4', '5', '5c', '5o', '6', '6o', '7', '8', '9']
 
 
 def create_database(

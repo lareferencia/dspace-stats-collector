@@ -39,7 +39,7 @@ matomo.countryISO = XX
 # dspace instalation dir
 dspace.dir = $dspace_dir
 
-# dspace version 1 char only (4,5,6)
+# dspace version (4, 5, 5c, 5o, 6, 6o, 7, 8, 9)
 dspace.majorVersion = $dspace_major_version
 
 # default solr server url 
