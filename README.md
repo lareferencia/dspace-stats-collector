@@ -33,32 +33,42 @@ Implementación de una alternativa ligera, fácil de desplegar y de solo lectura
 
 - Sistema Operativo basado en Linux
 - Realizar la instalación con un usuario distinto de root
-- Comprobar que curl  y cron se encuentran instalados en el sistema operativo.
+- Comprobar que `curl`, `git` y `cron` se encuentran instalados en el sistema operativo.
 - Poseer instalada una versión de DSpace igual o superior a la 4.x, o DSpace CRIS
 
-## 1. Seleccionar y correr el script de instalación dependiendo de su base de datos 
+## Instalación actual (autocontenida)
 
-!!!! Asegúrese de tener instalado curl antes de correr este comando, puede hacerlo ejecutando curl --help y verificando que produzca una salida válida
+La instalación recomendada está en `installer/` y funciona con `curl | bash` sin pasos previos.
 
-
-#### a. Base de datos postgres (estándar)
-
-```
-bash <(curl -L -s https://bit.ly/3OL8bNA)
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/main/installer/install.sh)
 ```
 
-#### b. Base de datos Oracle 
+Características del nuevo instalador:
 
-```
-bash <(curl -L -s https://bit.ly/3feiiOb)
-```
-El script iniciará descargando e instalando un ambiente Python (https://docs.conda.io/en/latest/miniconda.html) en el directorio home del usuario con que ejecutó el comando anterior.  Este entorno no afecta a ningún paquete base del equipo ni alterará la versión de Python ya instalada. 
+- Preflight del sistema base (git, curl, tar, etc.).
+- Selección automática de la mayor versión entre tags y ramas versionadas (`vX.Y` o `vX.Y.Z`).
+- Uso de `venv` con Python del sistema si hay `3.10+`; fallback a Miniconda si no.
+- Modo development opcional con instalación editable.
+- Preserva automáticamente `config` y `var/state` al reinstalar/actualizar.
+- Perfil stable PostgreSQL-only (sin soporte Oracle).
 
-**Todo el software instalado corre de manera independiente sin alterar el sistema base.**
+Más ejemplos y opciones en: `installer/README.md`
 
-Continuará con la instalación de los paquetes Python requeridos.
+## 1. Ejecutar instalación
 
-Finalmente, se instalará el código de la aplicación, se creará el archivo de configuración default (que es preciso reemplazar luego) y se descargará la última versión del archivo COUNTER Robots (utilizado para la identificación de bots.
+Ejecute el comando anterior desde el usuario final de operación (no root).  
+El instalador dejará siempre la estructura compatible con versiones previas en:
+
+- `CURRENT_USER_HOME/dspace-stats-collector/bin`
+- `CURRENT_USER_HOME/dspace-stats-collector/config`
+
+Según disponibilidad del sistema, usará:
+
+- `venv` con Python del sistema (`>= 3.10`), o
+- Miniconda local como fallback (sin tocar Python global del sistema).
+
+Además, instalará el código desde Git (tag/rama elegida), creará la configuración default y descargará el archivo COUNTER Robots.
 
 **Video del proceso:** 
 https://www.youtube.com/watch?v=T5Bhf6Ek_u4
@@ -70,7 +80,7 @@ Ingrese a la dirección http://statsconfig.lareferencia.info/generator.html.
 Verá un formulario con 3 campos obligatorios:
 
 - OpenDOAR ID (*)
-- Versión de DSpace instalada, tenga en cuenta que existen opciones para DSpace CRIS y Bases Oracle
+- Versión de DSpace instalada. Nota: en el perfil stable actual se soporta PostgreSQL; Oracle queda como esquema legacy.
 - Ruta completa al directorio de instalación de DSpace:  por ejemplo /home/usuario/dspace
 
 ATENCIÓN: En caso de DSPACE CRIS debe ingresar como directorio base el directorio donde reside el código fuente, donde el instalador podrá acceder al build.properties
@@ -95,7 +105,7 @@ CURRENT_USER_HOME/dspace-stats-collector/bin/dspace-stats-collector -f YYYY-MM-D
 
 ## 4. Revisión de la bitácora (log de ejecución)
  
-Una vez concluida la ejecución, puede revisar el archivo de bitácora creado en CURRENT_USER_HOME/dspace-stats-colector/var/logs/dspace-stats-collector.YYYY-MM-DD.log
+Una vez concluida la ejecución, puede revisar el archivo de bitácora creado en CURRENT_USER_HOME/dspace-stats-collector/var/logs/dspace-stats-collector.YYYY-MM-DD.log
  
 NOTA: reemplazar **CURRENT_USER_HOME** por el home del usuario que utilizó para ejecutar el comando de instalación.
  
@@ -202,5 +212,3 @@ References
 [5] Matomo tracking API, https://developer.matomo.org/api-reference/tracking-api
 
 [6] DSpace Statistics https://wiki.lyrasis.org/display/DSDOC3x/DSpace+Statistics
-
-

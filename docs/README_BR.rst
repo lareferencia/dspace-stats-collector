@@ -1,82 +1,64 @@
 .. highlight:: shell
 
 ============
-INSTALAÇÃO
+INSTALACAO
 ============
 
-Instalação para usuarios com permissão independente (Pacote python incluso)
------------------------------------------------------------------
+Instalacao standalone em nivel de usuario (Linux)
+-------------------------------------------------
 
-O coletador pode ser executado manualmente ou como uma tarefa agendada usando o sistema de agendamento de tarefas, CRON. Um único script bash de instalação foi desenvolvido para implementar um processo simples de execução. Esse script bash executa as seguintes etapas de instalação e configuração:
+O coletor pode ser executado manualmente ou via CRON.
+O instalador atual e autocontido e instala tudo em ``/home/USUARIO/dspace-stats-collector`` sem privilegios de root.
 
-* Baixar e instalar um ambiente mínimo de Python (https://docs.conda.io/en/latest/miniconda.html) no diretório origem do usuário;
+Requisitos base
+---------------
 
-* Instalar os pacostes Python reinstall necessários; 
+* Linux
+* Usuario sem root
+* ``curl``, ``git``, ``tar``, ``gzip``, ``grep``, ``sed``, ``awk``, ``sort``, ``tail``, ``mktemp``, ``uname``
+* ``cron`` disponivel no sistema
+* DSpace 4+ / 5+ / 6+ / CRIS
+* Opcional: Python 3.10+ no sistema (se nao existir, o instalador usa Miniconda local)
 
-* Criar um arquivo de configuração base;
+Passos de instalacao
+--------------------
 
-* Baixar o arquivo COUNTER Robots mais recente;
+1. Execute diretamente do GitHub:
 
-* Oriente o usuário a preencher informações mínimas no arquivo de configuração: o diretório de instalação do DSpace, a versão principal do DSpace e as credenciais necessárias para enviar eventos para uma instância remota do Matomo.
+   ``bash <(curl -fsSL https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/main/installer/install.sh)``
 
-Após esse processo simples de instalação, o coletor está pronto para começar a trabalhar coletando e enviando dados de uso para a instância remota do Matomo pré-configurada. Também é fornecido um comando para instalar o script do coletor no usuário CRONTAB.
+2. Selecione a referencia de versao.
+   O padrao e a maior versao encontrada em tags/branches no formato ``vX.Y`` ou ``vX.Y.Z``.
 
-Importante: O script de instalação e o dspace-stats-collector não requerem privilégios de superusuário e não instale os pacot fora da pasta /home/USUARIO/dspace-stats-collector. O script do coletor executa consultas com permissão de “somente leitura” no dspace relational db e solr core. Esta ferramenta não grava ou modifica nenhum arquivo dspace, banco de dados ou solr core. É recomendado, mas na obrigatório, executar a instalação plugin utilizando o usuário dono dos arquivos do DSpace.
+3. O modo development (editable) e opcional.
+   O modo stable e o padrao.
 
-Etapas da Instalação:
--------------------
+Comportamento de runtime e compatibilidade
+------------------------------------------
 
+* Stable (``v1.x`` e superior) usa perfil Python 3.10+.
+* Legacy (``v0.x``) usa perfil Python 3.8.
+* Stable e somente PostgreSQL (Oracle nao incluido).
+* Se existir Python compativel no sistema, usa ``venv``.
+* Se nao existir, instala Miniconda local.
+* Em ambos os casos os caminhos permanecem compativeis:
 
+  * ``/home/USUARIO/dspace-stats-collector/bin``
+  * ``/home/USUARIO/dspace-stats-collector/config``
 
-1. Verificar se os programas wget e cron estão instalados no Sistema Operacional. 
+* Em reinstalacao/atualizacao, ``config`` e ``var/state`` sao preservados automaticamente.
 
-2. Baixar o script de instalação pelo endereço, https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh , usando o comando wget. Certifique que está utilizando o usuário padrão(Preferencialmente o proprietário do dspace) e localizado na pasta correta.
+Passos apos instalacao
+----------------------
 
-  # cd /home/USUARIO/dspace-stats-collector
-  
-  # wget https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/install-standalone.sh
+1. Substitua ``/home/USUARIO/dspace-stats-collector/config/default.properties`` pelo arquivo especifico do repositorio.
 
-3. Execute o script de instalação utilizando o usuário padrão 
+2. Execute teste inicial:
 
-  # sh ./install-standalone.sh
+   ``/home/USUARIO/dspace-stats-collector/bin/dspace-stats-collector -f AAAA-MM-DD --verbose -c /home/USUARIO/dspace-stats-collector/config``
 
-4. Configurar as parametros do matomo no arquivo /home/USUARIO/dspace-stats-collector/config/default.properties, seguindo como exemplo a imagem abaixo. No campo dspace.dir preencher com a localização do diretório do DSpace e no campo dspace.majorVersion preencher com a versão do DSpace. 
+3. Confirme com o gestor do nodo nacional que os dados chegaram ao Matomo.
 
- # cd /home/USUARIO/dspace-stats-collector/config
-  
- # vim default.properties
+4. Ative execucao periodica:
 
-EXEMPLO:
- 
-  matomo.trackerUrl = http://matomo.lareferencia.info/matomo.php
-
-  matomo.idSite = ALTERAR CAMPO PARA INFORMAÇÃO ENVIA POR E-MAIL
-
-  matomo.repositoryId = ALTERAR CAMPO PARA INFORMAÇÃO ENVIA POR E-MAIL
-
-  matomo.token_auth = ALTERAR CAMPO PARA INFORMAÇÃO ENVIA POR E-MAIL
-
-  matomo.rec = 1
-
-  matomo.batchSize = 50
-  
-  dspace.dir = /dspace
-  
-  dspace.majorVersion = 6
-
-
-5. (Primeira execução)Execute o comando /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f AAAA-MM-DD  (os registros enviados serão a partir da data escolhida, no formato AAAA-MM-DD) 
-
-  # /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f AAAA-MM-DD
-
-  EXEMPLO(Registros a partir da data 01/01/2010):
-  
-  # /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-collector -v -f 2010-01-01
-
-6. Depois de finalizado, check se o plugin enviou os dados para a instancia do Matomo. Não execute os próximos passos caso a etapa acima não tenha sido concluida e todas as informações não tenham sido enviadas.
-
-7. Execute o comando para rodar o comando periodicamente /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-cronify 
-
-  # /home/USUARIO/dspace-stasts-collector/bin/dspace-stats-cronify 
-
-8. Verifique e ajuste a execução do crontab(o script de instalação adiciona uma entrada automaticamente no usuário crontab, o script do será executado periodicamente a cada 60 minutos)   
+   ``/home/USUARIO/dspace-stats-collector/bin/dspace-stats-cronify -c /home/USUARIO/dspace-stats-collector/config``

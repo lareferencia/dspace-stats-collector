@@ -1,0 +1,13 @@
+# Stable runtime dependencies (Python 3.10+ , PostgreSQL-only)
+requests>=2.31,<3
+pyjavaprops>=1.0.2,<2
+SQLAlchemy>=2.0,<3
+psycopg2-binary>=2.9,<3
+pysolr>=3.9,<4
+pandas>=2.1,<3
+urllib3>=1.26,<3
+pytz>=2023.3
+python-crontab>=2.7,<4
+anonymizeip
+pid
+tenacity>=8.2,<10
