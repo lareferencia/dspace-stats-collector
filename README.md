@@ -1,214 +1,137 @@
-LA Referencia DSpace Usage Stats Collector
-============================
+# DSpace Stats Collector
 
 [![PyPI version](https://img.shields.io/pypi/v/dspace-stats-collector.svg)](https://pypi.python.org/pypi/dspace-stats-collector)
-
 [![License](https://img.shields.io/pypi/l/dspace-stats-collector.svg)](https://pypi.python.org/pypi/dspace-stats-collector)
 
+## Overview
 
-### ¿Qué es DSpace Stats Collector?
+DSpace Stats Collector is a Python agent that reads usage events from a DSpace repository, enriches them with repository metadata, filters robot traffic, and sends the resulting events to a Matomo tracker.
 
-Un agente de Python para enviar eventos de estadísticas de uso de DSpace usando el protocolo Matomo.
+It is designed as a lightweight, read-only collector for repository operators who need to share DSpace usage statistics with an external usage statistics service or regional aggregator.
 
-Implementación de una alternativa ligera, fácil de desplegar y de solo lectura para un recolector de datos de uso de DSpace compatible con la infraestructura de estadísticas de uso de Matomo (LA Referencia y OpenAIRE). Envía datos de uso de repositorios individuales a un agregador regional externo mediante consultas de solo lectura al subsistema de estadísticas Solr y BD de DSpace.
+## How It Works
 
----
-<br/>
+The collector follows a pipe-and-filter workflow:
 
+1. Read item views and bitstream downloads from the DSpace Solr statistics core.
+2. Filter robot traffic using the COUNTER robots list.
+3. Enrich events with item and bitstream metadata from the DSpace database.
+4. Build session and IP handling fields.
+5. Send events to Matomo through the bulk tracking API.
 
-## Guías para usuarios LA Referencia 
+## Requirements
 
+- Linux-based operating system.
+- A non-root operating user for installation and execution.
+- `curl`, `git`, and `cron` available on the system.
+- DSpace 4 or newer, including supported DSpace CRIS deployments.
+- PostgreSQL for the current stable installer profile. Oracle remains a legacy profile and is not included in the stable runtime profile.
+- Python 3.10 or newer, or the installer-managed Miniconda fallback.
 
-- [Guía de Instalación (este documento)](https://github.com/lareferencia/dspace-stats-collector/blob/master/README.md)
-- [Guía de Actualización](https://github.com/lareferencia/dspace-stats-collector/blob/master/UPDATE.md)
-- [Guía de Desinstalación](https://github.com/lareferencia/dspace-stats-collector/blob/master/UNINSTALL.md)
-- [Exportador de eventos](https://github.com/lareferencia/dspace-stats-collector/blob/master/EXPORT.md)
----
-<br/>
-<br/>
+## Quick Install
 
-# Instalación - Ecosistema LA Referencia
-
-### Requerimientos
-
-- Sistema Operativo basado en Linux
-- Realizar la instalación con un usuario distinto de root
-- Comprobar que `curl`, `git` y `cron` se encuentran instalados en el sistema operativo.
-- Poseer instalada una versión de DSpace igual o superior a la 4.x, o DSpace CRIS
-
-## Instalación actual (autocontenida)
-
-La instalación recomendada está en `installer/` y funciona con `curl | bash` sin pasos previos.
+Run the installer as the final operating user, not as `root`:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/main/installer/install.sh)
 ```
 
-Características del nuevo instalador:
+The installer creates a self-contained installation under:
 
-- Preflight del sistema base (git, curl, tar, etc.).
-- Selección automática de la mayor versión entre tags y ramas versionadas (`vX.Y` o `vX.Y.Z`).
-- Uso de `venv` con Python del sistema si hay `3.10+`; fallback a Miniconda si no.
-- Modo development opcional con instalación editable.
-- Preserva automáticamente `config` y `var/state` al reinstalar/actualizar.
-- Perfil stable PostgreSQL-only (sin soporte Oracle).
+- `~/dspace-stats-collector/bin`
+- `~/dspace-stats-collector/config`
 
-Más ejemplos y opciones en: `installer/README.md`
+It selects the highest versioned release reference by default, uses a local virtual environment when possible, and falls back to a local Miniconda runtime when needed.
 
-## 1. Ejecutar instalación
+Advanced installer options are documented in [installer/README.md](installer/README.md).
 
-Ejecute el comando anterior desde el usuario final de operación (no root).  
-El instalador dejará siempre la estructura compatible con versiones previas en:
+## Configuration
 
-- `CURRENT_USER_HOME/dspace-stats-collector/bin`
-- `CURRENT_USER_HOME/dspace-stats-collector/config`
+The collector reads repository settings from:
 
-Según disponibilidad del sistema, usará:
-
-- `venv` con Python del sistema (`>= 3.10`), o
-- Miniconda local como fallback (sin tocar Python global del sistema).
-
-Además, instalará el código desde Git (tag/rama elegida), creará la configuración default y descargará el archivo COUNTER Robots.
-
-**Video del proceso:** 
-https://www.youtube.com/watch?v=T5Bhf6Ek_u4
- 
-## 2. Generación del archivo de configuración “default.properties”
- 
-Ingrese a la dirección http://statsconfig.lareferencia.info/generator.html.   
-
-Verá un formulario con 3 campos obligatorios:
-
-- OpenDOAR ID (*)
-- Versión de DSpace instalada. Nota: en el perfil stable actual se soporta PostgreSQL; Oracle queda como esquema legacy.
-- Ruta completa al directorio de instalación de DSpace:  por ejemplo /home/usuario/dspace
-
-ATENCIÓN: En caso de DSPACE CRIS debe ingresar como directorio base el directorio donde reside el código fuente, donde el instalador podrá acceder al build.properties
-
-Luego de hacer **clic en el botón ENVIAR, se descargará automáticamente el archivo default.properties** con los datos específicos para que su repositorio DSpace pueda establecer comunicación con el Matomo de LA Referencia y enviarle estadísticas de uso.
-
-**Reemplace el archivo default.properties que se encuentra en el directorio dspace-stats-collector/config/ por el archivo descargado**
-
-## 3. Ejecución de prueba
- 
-Seguidamente ejecute el siguiente comando reemplazando **YYYY-MM-DD** por la fecha deseada y **CURRENT_USER_HOME** por el home del usuario que usó para la instalación
-
-El parámetro -f especifica la fecha (año-mes-día) que marca el inicio del envío de datos a Matomo desde el repositorio DSpace. 
-
-**Importante!!: Por favor verifique con su nodo nacional la fecha de inicio de envio para ese momento. No ejecute el comando por primera vez sin esta información.**
-
-```
-CURRENT_USER_HOME/dspace-stats-collector/bin/dspace-stats-collector -f YYYY-MM-DD --verbose
+```text
+~/dspace-stats-collector/config/default.properties
 ```
 
-**Video:** https://www.youtube.com/watch?v=CZeafL52ngg
+At minimum, configure:
 
-## 4. Revisión de la bitácora (log de ejecución)
- 
-Una vez concluida la ejecución, puede revisar el archivo de bitácora creado en CURRENT_USER_HOME/dspace-stats-collector/var/logs/dspace-stats-collector.YYYY-MM-DD.log
- 
-NOTA: reemplazar **CURRENT_USER_HOME** por el home del usuario que utilizó para ejecutar el comando de instalación.
- 
-## 5. Verificación de envío a Matomo
+- Matomo tracker URL, site ID, and token.
+- Repository identifier and country.
+- DSpace installation directory.
+- DSpace major version.
+- Solr server URL, when it cannot be detected from the DSpace configuration.
 
-Verifique si los datos fueron enviados con éxito al Matomo preguntando al responsable técnico nacional de su nodo. El responsable nacional al ingresar a Matomo debe ingresar al menú Visitantes → Registro de visitas y allí filtrar según la fecha.
- 
-**Video:** https://www.youtube.com/watch?v=Xn6RGCy93ik
- 
-**IMPORTANTE!! No ejecute el siguiente paso sin esta verificación).**
+You can generate a default template with:
 
-## 6. Instalación del cron-job
- 
-Para instalar la tarea calendarizad (cron-job) que enviará datos automáticamente a Matomo, ejecute:
-
-```
-CURRENT_USER_HOME/dspace-stats-collector/bin/dspace-stats-cronify
+```bash
+~/dspace-stats-collector/bin/dspace-stats-configure -c ~/dspace-stats-collector/config -r default
 ```
 
-**Video:** https://www.youtube.com/watch?v=OM5HQC5faRU 
+## First Run
 
-NOTA: reemplazar **CURRENT_USER_HOME** por el home del usuario que utilizó para ejecutar el comando de instalación.
+Before enabling scheduled execution, run the collector manually for a known start date:
 
-**Importante!! Si no realiza esta tarea, el envío periódico no se realizará**
+```bash
+~/dspace-stats-collector/bin/dspace-stats-collector -f YYYY-MM-DD --verbose -c ~/dspace-stats-collector/config
+```
 
-Nota: De acuerdo a las características de su repositorio, puede que sea necesario aumentar la frecuencia de envío de datos.  En caso de tener un repositorio de grandes dimensiones consulte con su técnico responsable del nodo nacional.
- 
+Review the log file created under:
 
-## 7. Exportación de eventos antiguos
+```text
+~/dspace-stats-collector/var/logs/
+```
 
-A efectos de facilitar el envío de eventos de meses o años anteriores se ha desarrollado un comando (beta), por favor contacte a su representante nacional para coordinar envíos usando esta herramienta.
+## Cron Setup
 
-[Exportador de eventos](https://github.com/lareferencia/dspace-stats-collector/blob/master/EXPORT.md)
+After a successful manual run, install the scheduled job:
 
+```bash
+~/dspace-stats-collector/bin/dspace-stats-cronify
+```
 
------------------------------------------------------------------
+## Historical Export
 
----------------------------------
-------------
--------------
-------------
+For coordinated backfill, historical review, or recovery workflows, the collector includes `dspace-stats-export`. It runs the same input and filtering pipeline as the regular collector, but writes the resulting Matomo tracking requests to a local compressed file instead of sending them directly to Matomo.
 
-## Legacy - OpenAIRE 2020 
+Export a complete month:
 
-Implementation of a lightweight, easy-to-deploy, read-only alternative for a DSpace usage data collector compatible with Matomo and OpenAire usage statistics infrastructure. It sends usage data from individual repositories to an external regional aggregator by issuing read-only queries to the out-of-the-box DSpace Solr statistics subsystem.
+```bash
+~/dspace-stats-collector/bin/dspace-stats-export -y YYYY -m M
+```
 
-A regional usage statistics service allows the sharing of data on item access across repositories, e-journals and CRIS systems in order to support evaluation, management and reporting. The success of this kind of service depends on installing a collector component in  every repository, so one of the main requirements was to provide a user-friendly, non-invasive and reliable deploying process for repository managers.
+Export a date range of up to 31 days:
 
-This development is part of LA Referencia´s tasks in OpenAIRE Advance project,  aimed to build a pilot on usage data exchange between Latin America and Europe open science infrastructures. 
+```bash
+~/dspace-stats-collector/bin/dspace-stats-export -f YYYY-MM-DD -u YYYY-MM-DD
+```
 
-The design and the development of this usage data collector agent have been based on the following fundamental principles:
+The command writes the output in the current working directory using this filename pattern:
 
-* open-source, collaborative development 
+```text
+dspace_stats_export_<idSite>_<YYYY>_<MM>.txt.gz
+```
 
-* straightforward installation procedure for non-expert Linux users without root or superuser privileges 
+Historical exports can be resource-intensive because they read from Solr and enrich events through the DSpace database. Run them during low-traffic windows, export one month at a time for long periods, and coordinate file delivery with the receiving aggregator. LA Referencia deployments should follow the Spanish [historical export guide](EXPORT.md) before using this workflow in production.
 
-* capable of running in a sandbox without the need for installing system-wide packages in the host system
+## Available Commands
 
-* light-weight and preserving system stability and performance
+- `dspace-stats-collector`: collect and send usage events to Matomo.
+- `dspace-stats-configure`: create default configuration files.
+- `dspace-stats-cronify`: install the collector in the current user's crontab.
+- `dspace-stats-export`: export historical events for coordinated backfill workflows.
 
-* fully compatible with OpenAIRE Usage Statistics Service [1]
+## LA Referencia Deployments
 
-* adaptable to other software platforms and aggregator services 
+Repositories that report usage statistics through the LA Referencia ecosystem should follow the Spanish operational guide: [README-LAREFERENCIA.md](README-LAREFERENCIA.md).
 
+That guide includes the LA Referencia configuration generator workflow, national node coordination, Matomo validation steps, and production cron activation sequence.
 
-Implementation highlights
--------------------------
+## More Documentation
 
-The solution is based on a “pipe and filter” architecture with input, filter and output stages for events. This approach aims to factorize the problem in independent components, so more stages can be added/connected in the future, allowing to cover other software platforms.
+- [Installer reference](installer/README.md)
+- [Uninstall guide](UNINSTALL.md)
+- [Historical export guide](EXPORT.md)
 
-In this first version of the agent, the following  stages have been implemented for DSpace versions 4, 5 and 6, sending events to a Matomo instance, which is analysis platform used by the OpenAIRE [1]:
+## Background and Credits
 
-* DSpace Solr Statistics Input: an initial input component queries the internal DSpace Solr statistics core for new (later than a given/stored timestamp) usage events (item views/ item downloads).  This initial event contains fields for timestamp, item id, user agent, IP address, among others    
-
-* COUNTER Robots Filter: this filter excludes events generated by internet robots and crawlers based on a list of user agent values provided by project COUNTER [3] 
-
-* DSpace Database Filter: this stage queries the internal DSpace relational database (currently only Postgres supported) for complementary item information which is not stored in the Solr core but is required by OpenAire specifications. This filter adds item title, bitstream filename and oai_identifier as event fields
-
-* Matomo API Filter: this filter transforms previously gathered data into the set of parameters required by  Matomo Tracking API [4]
-
-* Matomo Sender Output: this filter buffers and sends batches of events into the regional tracker using the bulk tracking feature of Matomo HTTP Tracking API [4]
-
-.. image::  https://raw.githubusercontent.com/lareferencia/dspace-stats-collector/master/docs/pipeline-diagram.png
-
-The resulting pipeline runs from the main collector script that stores the last successfully sent timestamp as a state for future calls. 
-
-Credits
--------
-
-This component is part of an alternative DSpace Usage Statistics collector strategy developed by LA Referencia / CONCYTEC (Perú) / IBICT (Brasil) / OpenAIRE as part of OpenAIRE Advance project - WP5 - Subtask 5.2.2. "Pilot common methods for usage statistics across Europe & Latin America"
-
-
-References
-----------
-
-[1] Schirrwagen, Jochen, Pierrakos, Dimitris, MacIntyre, Ross, Needham, Paul, Simeonov, Georgi, Príncipe, Pedro, & Dazy, André. (2017). 
-
-[2] OpenAIRE2020 - Usage Statistics Services - D8.5. doi: https://doi.org/10.5281/zenodo.1034164
-
-[3] Python generators https://wiki.python.org/moin/Generators
-
-[4] Project COUNTER https://www.projectcounter.org/
-
-[5] Matomo tracking API, https://developer.matomo.org/api-reference/tracking-api
-
-[6] DSpace Statistics https://wiki.lyrasis.org/display/DSDOC3x/DSpace+Statistics
+This project was developed as part of LA Referencia and OpenAIRE usage statistics work. Historical background and credits are available in [HISTORY.rst](HISTORY.rst).
