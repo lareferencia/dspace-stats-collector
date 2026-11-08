@@ -2,6 +2,15 @@
 History
 =======
 
+1.0.1 (unreleased)
+------------------
+
+* Fix helpdesk issue #200: search beyond empty periods of more than 30 days
+  using a fixed UTC upper bound (or the explicit end date).
+* Preserve delivery checkpoints and Matomo retry behavior when no events are
+  returned or a send fails.
+* Add regression coverage and a manual testing guide in docs/testing-issue-200.md.
+
 Project background / OpenAIRE 2020
 ----------------------------------
 
