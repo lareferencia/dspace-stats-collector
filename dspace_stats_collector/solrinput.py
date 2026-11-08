@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 """ SOLR pipeline components """
 
-from email.utils import parsedate
 import logging
-import re
 logger = logging.getLogger()
 
 import datetime
@@ -29,83 +27,37 @@ class SolrTimestampCursor(object):
         self.maxDaysToLookForEvents = maxDaysToLookForEvents
 
     def fetch(self, rows=500, limit=None, initialTimestamp=None, untilDate=None):
-        """ Generator method that grabs all the documents in bulk sets of
-        'rows' documents
-        :param rows: number of rows for each request
+        """Read matching events through a fixed upper bound, including long gaps.
+
+        Empty periods never advance the durable delivery checkpoint. Only the
+        Matomo sender acknowledges progress, so failed batches remain retryable.
+        maxDaysToLookForEvents is retained in the constructor for compatibility;
+        it no longer limits how far this cursor searches.
         """
+        if rows <= 0:
+            raise ValueError("rows must be positive")
 
-        docs_retrieved = 0
-        done = False
+        upper_bound = untilDate or datetime.datetime.now(
+            datetime.timezone.utc
+        ).strftime(TIMESTAMP_PATTERN)
+        from_timestamp = initialTimestamp
+        retrieved = 0
 
-        # this will hold the working from timestamp 
-        fromTimestamp = initialTimestamp
+        while limit is None or retrieved < limit:
+            page_size = rows if limit is None else min(rows, limit - retrieved)
+            logger.debug(
+                "Fetching %s SOLR docs from %s through %s",
+                page_size, from_timestamp, upper_bound,
+            )
+            docs = self._query_solr(from_timestamp, upper_bound, page_size)
+            if not docs:
+                logger.debug("No further matching SOLR events through %s", upper_bound)
+                return
 
-        # this will hold the last timestamp we have successfully retrieved and processed
-        lastGoodFromTimestamp = initialTimestamp
-    
-        # this counts the number of days we have looked ahead if the initial query does not return any results
-        retryToLookAhead = 0
-        # this counts the number of days we will look ahead from fromTimestamp
-        daysToLookAhead = 1
+            retrieved += len(docs)
+            from_timestamp = docs[-1]['time']
+            yield docs
 
-        while not done:
-
-             # limit the number of rows to the number of documents left to retrieve
-            if limit is not None:
-                rows = min(rows, limit - docs_retrieved)
-
-            # if the untilDate is None, then we set toTimestamp to the initialTimestamp plus the number of days to look ahead (default 1)
-            if untilDate is None:
-                # we look ahead for the number of days specified in daysToLookAhead counting from fromTimestamp
-                toTimeStamp = fromTimestamp + ('+%sDAYS' % daysToLookAhead) 
-            else: # otherwise, we need to set up the toTimeStamp to the untilDate
-                logger.debug('Until date is fixed looking events until %s' % untilDate)
-                toTimeStamp = untilDate
-
-            # query solr    
-            logger.debug('Fetching {} SOLR docs from timestamp: {} to timestamp {}'.format(rows, fromTimestamp, toTimeStamp))
-            docs = self._query_solr(fromTimestamp, toTimeStamp, rows)
-            numDocs = len(docs)
- 
-            # if we have retrieved any documents, then we need to update the docs_retrieved count, also update fromTimestamp to the timestamp of the last document
-            # and we need to reset the retryToLookAhead counter, then we yield the documents
-            if numDocs > 0:
-                docs_retrieved += numDocs
-                lastGoodFromTimestamp = docs[-1]['time'] # update the lastGoodFromTimestamp to the timestamp of the last document
-                fromTimestamp = lastGoodFromTimestamp # update the fromTimestamp to the lastGoodFromTimestamp
-                retryToLookAhead = 0
-                yield docs
-            else: # if we did not found any documents
-                # we restore the last good fromTimestamp, because if we moved forward in time without succes we need restore the last good timestamp in order to avoid cumulative day offsets
-                fromTimestamp = lastGoodFromTimestamp
-                # , then we need to increase the number of days to look ahead
-                retryToLookAhead += 1
-                # we move the fromTimestamp adding n+1 days where n are the days we have looked ahead so far (was incremented by 1 in the last line) 
-                fromTimestamp = fromTimestamp + ('+%sDAYS' % retryToLookAhead)
-                # note that toTimeStamp will be fromTimestamp + retryToLookAhead + 1 ( keeping the one day window)
-
-                # if the retryToLookAhead is reached the maxDaysToLoolForEvent, then we are done
-                # or if untilDate was originally set, then we are done ignoring the look ahead process
-                done = (retryToLookAhead > self.maxDaysToLookForEvents) or (untilDate is not None) or (docs_retrieved >= limit)
-
-            
-                # finally we consider an special case, if the lastGoodFromTimestamp + retyToLookAhead is greater than present moment then we are done
-                try:
-                    # example 2022-10-17T08:36:03.879Z
-                    parsedate = datetime.datetime.strptime(str(lastGoodFromTimestamp), TIMESTAMP_PATTERN)
-                    parsedate = parsedate + datetime.timedelta(days=retryToLookAhead)   
-                    
-                    if parsedate > datetime.datetime.now(): 
-                        logger.debug('SOLR Query look ahead process has reached the present moment, no events found!!! we are done')
-                        done = True
-                        
-                except ValueError as e: # if the date is not valid, then we ignore this error and continue
-                    logger.error('Error parsing datestamp %s during solr query process - Something is wrong with lastTimestamp store' % lastGoodFromTimestamp)
-
-
-
-        
-       
     def _query_solr(self, fromTimestamp, toTimeStamp, rows):
         
         # copy the query and add the time range
